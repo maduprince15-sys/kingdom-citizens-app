@@ -20,21 +20,33 @@ export default function DeleteAccountButton() {
     setLoading(true)
     setMessage('')
 
-    const response = await fetch('/api/account/delete', {
-      method: 'POST',
-    })
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+      })
 
-    const result = await response.json()
+      let result: any = {}
+      try {
+        result = await response.json()
+      } catch {
+        result = {}
+      }
 
-    if (!response.ok) {
-      setMessage(result.error || 'Failed to delete account.')
+      if (!response.ok) {
+        setMessage(result.error || `Delete failed (${response.status})`)
+        setLoading(false)
+        return
+      }
+
+      await supabase.auth.signOut()
       setLoading(false)
-      return
+      router.push('/login')
+      router.refresh()
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Network error during delete.'
+      setMessage(msg)
+      setLoading(false)
     }
-
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
   }
 
   return (

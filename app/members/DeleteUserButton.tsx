@@ -23,23 +23,36 @@ export default function DeleteUserButton({ userId, email }: Props) {
     setLoading(true)
     setMessage('')
 
-    const response = await fetch('/api/admin/delete-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ targetUserId: userId }),
-    })
+    try {
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ targetUserId: userId }),
+      })
 
-    const result = await response.json()
+      let result: any = {}
+      try {
+        result = await response.json()
+      } catch {
+        result = {}
+      }
 
-    if (!response.ok) {
-      setMessage(result.error || 'Failed to delete user.')
+      if (!response.ok) {
+        setMessage(result.error || `Delete failed (${response.status})`)
+        setLoading(false)
+        return
+      }
+
+      setMessage('User deleted successfully.')
       setLoading(false)
-      return
+      router.refresh()
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Network error during delete.'
+      setMessage(msg)
+      setLoading(false)
     }
-
-    router.refresh()
   }
 
   return (
