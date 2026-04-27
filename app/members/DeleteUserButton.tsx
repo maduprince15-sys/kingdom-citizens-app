@@ -2,17 +2,20 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { createClient } from '../../lib/supabase/client'
 
-export default function DeleteAccountButton() {
+type Props = {
+  userId: string
+  email: string | null
+}
+
+export default function DeleteUserButton({ userId, email }: Props) {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      'Are you sure you want to delete your account? This cannot be undone.'
+      `Delete ${email ?? 'this user'}? This cannot be undone.`
     )
 
     if (!confirmed) return
@@ -20,34 +23,36 @@ export default function DeleteAccountButton() {
     setLoading(true)
     setMessage('')
 
-    const response = await fetch('/api/account/delete', {
+    const response = await fetch('/api/admin/delete-user', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ targetUserId: userId }),
     })
 
     const result = await response.json()
 
     if (!response.ok) {
-      setMessage(result.error || 'Failed to delete account.')
+      setMessage(result.error || 'Failed to delete user.')
       setLoading(false)
       return
     }
 
-    await supabase.auth.signOut()
-    router.push('/login')
     router.refresh()
   }
 
   return (
-    <div className='mt-6'>
+    <div>
       <button
         onClick={handleDelete}
         disabled={loading}
-        className='rounded bg-red-700 px-4 py-2 text-white disabled:opacity-50'
+        className='rounded bg-red-700 px-3 py-1 text-sm text-white disabled:opacity-50'
       >
-        {loading ? 'Deleting account...' : 'Delete My Account'}
+        {loading ? 'Deleting...' : 'Delete'}
       </button>
 
-      {message && <p className='mt-3 text-sm text-red-400'>{message}</p>}
+      {message && <p className='mt-1 text-xs text-red-400'>{message}</p>}
     </div>
   )
 }

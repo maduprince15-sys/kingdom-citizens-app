@@ -2,7 +2,7 @@
 import { createClient as createRequestClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createRequestClient()
 
   const {
@@ -14,9 +14,33 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { data: currentProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || currentProfile?.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const body = await request.json()
+  const targetUserId = body?.targetUserId
+
+  if (!targetUserId) {
+    return NextResponse.json({ error: 'Missing target user id.' }, { status: 400 })
+  }
+
+  if (targetUserId === user.id) {
+    return NextResponse.json(
+      { error: 'Use Delete My Account to remove your own account.' },
+      { status: 400 }
+    )
+  }
+
   try {
     const admin = createAdminClient()
-    const { error } = await admin.auth.admin.deleteUser(user.id, true)
+    const { error } = await admin.auth.admin.deleteUser(targetUserId, true)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })

@@ -1,5 +1,6 @@
 ﻿import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
+import DeleteUserButton from './DeleteUserButton'
 
 export default async function MembersPage() {
   const supabase = await createClient()
@@ -12,6 +13,14 @@ export default async function MembersPage() {
   if (userError || !user) {
     redirect('/login')
   }
+
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAdmin = currentProfile?.role === 'admin'
 
   const { data: members, error } = await supabase
     .from('profiles')
@@ -39,6 +48,9 @@ export default async function MembersPage() {
               <th className='border border-gray-700 px-4 py-2 text-left'>Email</th>
               <th className='border border-gray-700 px-4 py-2 text-left'>Phone</th>
               <th className='border border-gray-700 px-4 py-2 text-left'>Role</th>
+              {isAdmin && (
+                <th className='border border-gray-700 px-4 py-2 text-left'>Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -48,6 +60,15 @@ export default async function MembersPage() {
                 <td className='border border-gray-700 px-4 py-2'>{member.email}</td>
                 <td className='border border-gray-700 px-4 py-2'>{member.phone || '-'}</td>
                 <td className='border border-gray-700 px-4 py-2'>{member.role}</td>
+                {isAdmin && (
+                  <td className='border border-gray-700 px-4 py-2'>
+                    {member.id === user.id ? (
+                      <span className='text-sm text-gray-400'>Use dashboard delete</span>
+                    ) : (
+                      <DeleteUserButton userId={member.id} email={member.email} />
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
