@@ -31,6 +31,8 @@ export async function POST(request: Request) {
   const body = await request.json()
   const title = body?.title?.trim()
   const content = body?.content?.trim()
+  const image_url = body?.image_url?.trim() || null
+  const video_url = body?.video_url?.trim() || null
 
   if (!title || !content) {
     return NextResponse.json({ error: 'Title and content are required.' }, { status: 400 })
@@ -39,6 +41,8 @@ export async function POST(request: Request) {
   const { error } = await supabase.from('app_announcements').insert({
     title,
     content,
+    image_url,
+    video_url,
     author_id: user.id,
     author_name: profile.full_name || user.email || 'Kingdom Citizens',
   })
