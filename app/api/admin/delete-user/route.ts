@@ -40,10 +40,20 @@ export async function POST(request: Request) {
 
   try {
     const admin = createAdminClient()
-    const { error } = await admin.auth.admin.deleteUser(targetUserId, false)
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    const { error: deleteProfileError } = await admin
+      .from('profiles')
+      .delete()
+      .eq('id', targetUserId)
+
+    if (deleteProfileError) {
+      return NextResponse.json({ error: deleteProfileError.message }, { status: 400 })
+    }
+
+    const { error: authError } = await admin.auth.admin.deleteUser(targetUserId, false)
+
+    if (authError) {
+      return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true })
@@ -52,4 +62,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
-
