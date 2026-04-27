@@ -33,7 +33,7 @@ export default async function MembersPage() {
 
   if (error) {
     return (
-      <main className='p-6 text-white'>
+      <main className='p-4 md:p-6 text-white'>
         <h1 className='text-2xl font-bold'>Members</h1>
         <p className='mt-4'>Error loading members: {error.message}</p>
       </main>
@@ -41,10 +41,63 @@ export default async function MembersPage() {
   }
 
   return (
-    <main className='p-6 text-white'>
+    <main className='p-4 md:p-6 text-white'>
       <h1 className='text-2xl font-bold'>Members</h1>
 
-      <div className='mt-6 overflow-x-auto'>
+      <div className='mt-6 space-y-4 md:hidden'>
+        {members?.map((member) => (
+          <div key={member.id} className='rounded border border-gray-700 p-4'>
+            <div className='space-y-2'>
+              <div>
+                <p className='text-xs text-gray-400'>Full Name</p>
+                <p>{member.full_name || 'No name yet'}</p>
+              </div>
+
+              <div>
+                <p className='text-xs text-gray-400'>Email</p>
+                <p className='break-all'>{member.email}</p>
+              </div>
+
+              <div>
+                <p className='text-xs text-gray-400'>Phone</p>
+                <p>{member.phone || '-'}</p>
+              </div>
+
+              <div>
+                <p className='text-xs text-gray-400'>Role</p>
+                {showRoleControls && member.id !== user.id ? (
+                  <RoleSelect
+                    userId={member.id}
+                    email={member.email}
+                    currentRole={member.role}
+                    actorRole={actorRole}
+                  />
+                ) : (
+                  <p>{member.role}</p>
+                )}
+              </div>
+
+              {(showRoleControls || showDeleteControls) && (
+                <div className='pt-2'>
+                  {member.id === user.id ? (
+                    <span className='text-sm text-gray-400'>Use dashboard delete</span>
+                  ) : showDeleteControls ? (
+                    member.role === 'owner' ? (
+                      <span className='text-sm text-gray-400'>Protected owner</span>
+                    ) : (
+                      <DeleteUserButton userId={member.id} email={member.email} />
+                    )
+                  ) : (
+                    <span className='text-sm text-gray-400'>Role management only</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className='mt-6 hidden overflow-x-auto md:block'>
         <table className='min-w-full border border-gray-700'>
           <thead className='bg-gray-800'>
             <tr>

@@ -32,7 +32,7 @@ export default async function PostsPage() {
 
   if (error) {
     return (
-      <main className='p-6 text-white'>
+      <main className='p-4 md:p-6 text-white'>
         <h1 className='text-2xl font-bold'>Posts</h1>
         <p className='mt-4'>Error loading posts: {error.message}</p>
       </main>
@@ -40,7 +40,7 @@ export default async function PostsPage() {
   }
 
   return (
-    <main className='p-6 text-white'>
+    <main className='p-4 md:p-6 text-white'>
       <h1 className='text-2xl font-bold'>Posts</h1>
       <p className='mt-2 text-sm text-gray-300'>Community and teaching posts.</p>
 

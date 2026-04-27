@@ -4,6 +4,7 @@ import { createClient } from '../../lib/supabase/server'
 import { canModeratePosts, canPostAnnouncements } from '../../lib/permissions'
 import CreateAnnouncementForm from './CreateAnnouncementForm'
 import DeleteAnnouncementButton from './DeleteAnnouncementButton'
+import PinAnnouncementButton from './PinAnnouncementButton'
 
 export default async function AnnouncementsPage() {
   const supabase = await createClient()
@@ -24,15 +25,18 @@ export default async function AnnouncementsPage() {
     .single()
 
   const role = profile?.role ?? 'member'
+  const canPin = role === 'owner' || role === 'moderator'
 
   const { data: announcements, error } = await supabase
     .from('app_announcements')
-    .select('id, title, content, image_url, video_url, author_id, author_name, created_at')
+    .select('id, title, content, image_url, video_url, author_id, author_name, created_at, is_pinned, pinned_at')
+    .order('is_pinned', { ascending: false })
+    .order('pinned_at', { ascending: false })
     .order('created_at', { ascending: false })
 
   if (error) {
     return (
-      <main className='p-6 text-white'>
+      <main className='p-4 md:p-6 text-white'>
         <h1 className='text-2xl font-bold'>Announcements</h1>
         <p className='mt-4'>Error loading announcements: {error.message}</p>
       </main>
@@ -40,7 +44,7 @@ export default async function AnnouncementsPage() {
   }
 
   return (
-    <main className='p-6 text-white'>
+    <main className='p-4 md:p-6 text-white'>
       <h1 className='text-2xl font-bold'>Announcements</h1>
       <p className='mt-2 text-sm text-gray-300'>Official notices and ministry updates.</p>
 
@@ -53,7 +57,15 @@ export default async function AnnouncementsPage() {
 
           return (
             <article key={item.id} className='rounded border border-gray-700 p-4'>
-              <h2 className='text-xl font-semibold'>{item.title}</h2>
+              <div className='flex flex-wrap items-center gap-2'>
+                <h2 className='text-xl font-semibold'>{item.title}</h2>
+                {item.is_pinned && (
+                  <span className='rounded bg-amber-700 px-2 py-1 text-xs text-white'>
+                    Pinned
+                  </span>
+                )}
+              </div>
+
               <p className='mt-2 whitespace-pre-wrap text-gray-200'>{item.content}</p>
 
               {item.image_url && (
@@ -92,6 +104,8 @@ export default async function AnnouncementsPage() {
                 )}
 
                 {canDelete && <DeleteAnnouncementButton id={item.id} />}
+
+                {canPin && <PinAnnouncementButton id={item.id} isPinned={Boolean(item.is_pinned)} />}
               </div>
             </article>
           )

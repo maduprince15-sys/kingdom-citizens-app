@@ -1,6 +1,8 @@
 ﻿import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
+import { createAdminClient } from '../../../../lib/supabase/admin'
 import { canModeratePosts } from '../../../../lib/permissions'
+import { getStoragePathFromPublicUrl } from '../../../../lib/storage'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -33,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data: announcement, error: loadError } = await supabase
     .from('app_announcements')
-    .select('id, author_id')
+    .select('id, author_id, image_url')
     .eq('id', id)
     .single()
 
@@ -47,13 +49,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const imagePath = getStoragePathFromPublicUrl(announcement.image_url, 'content-media')
+
+  const { error: deleteError } = await admin
     .from('app_announcements')
     .delete()
     .eq('id', id)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 400 })
+  }
+
+  if (imagePath) {
+    await admin.storage.from('content-media').remove([imagePath])
   }
 
   return NextResponse.json({ success: true })
