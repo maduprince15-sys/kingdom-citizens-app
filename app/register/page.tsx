@@ -4,6 +4,17 @@ import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
+const getURL = () => {
+  let url =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_VERCEL_URL ??
+    'http://localhost:3000/'
+
+  url = url.startsWith('http') ? url : `https://${url}`
+  url = url.endsWith('/') ? url : `${url}/`
+  return url
+}
+
 export default function RegisterPage() {
   const supabase = createClient()
 
@@ -23,7 +34,7 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: 'http://localhost:3000/auth/callback',
+        emailRedirectTo: `${getURL()}auth/callback`,
         data: {
           full_name: fullName,
           phone: phone,

@@ -4,6 +4,17 @@ import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
+const getURL = () => {
+  let url =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_VERCEL_URL ??
+    'http://localhost:3000/'
+
+  url = url.startsWith('http') ? url : `https://${url}`
+  url = url.endsWith('/') ? url : `${url}/`
+  return url
+}
+
 export default function ForgotPasswordPage() {
   const supabase = createClient()
 
@@ -17,7 +28,7 @@ export default function ForgotPasswordPage() {
     setMessage('')
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:3000/auth/callback?next=/update-password',
+      redirectTo: `${getURL()}auth/callback?next=/update-password`,
     })
 
     if (error) {
