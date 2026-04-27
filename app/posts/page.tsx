@@ -1,4 +1,5 @@
-﻿import { redirect } from 'next/navigation'
+﻿import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { canCreatePosts, canModeratePosts } from '../../lib/permissions'
 import CreatePostForm from './CreatePostForm'
@@ -48,6 +49,7 @@ export default async function PostsPage() {
       <div className='space-y-4'>
         {posts?.map((item) => {
           const canDelete = canModeratePosts(role) || item.author_id === user.id
+          const canEdit = canModeratePosts(role) || item.author_id === user.id
 
           return (
             <article key={item.id} className='rounded border border-gray-700 p-4'>
@@ -79,11 +81,18 @@ export default async function PostsPage() {
                 By {item.author_name || 'Kingdom Citizens'} · {new Date(item.created_at).toLocaleString()}
               </p>
 
-              {canDelete && (
-                <div className='mt-4'>
-                  <DeletePostButton id={item.id} />
-                </div>
-              )}
+              <div className='mt-4 flex flex-wrap gap-3'>
+                {canEdit && (
+                  <Link
+                    href={`/posts/edit/${item.id}`}
+                    className='rounded bg-yellow-600 px-3 py-1 text-sm text-white'
+                  >
+                    Edit
+                  </Link>
+                )}
+
+                {canDelete && <DeletePostButton id={item.id} />}
+              </div>
             </article>
           )
         })}
