@@ -1,362 +1,239 @@
-import PublicHeader from './components/PublicHeader'
 import Link from 'next/link'
-
-const LOGO_SRC = '/logo.png'
+import PublicHeader from './components/PublicHeader'
+import PublicFooter from './components/PublicFooter'
 
 export default function HomePage() {
   return (
-   <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
-<PublicHeader />
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#5a0716_0%,#2a0610_28%,#1a0b09_55%,#140707_100%)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,215,120,0.22),transparent_28%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_22%),radial-gradient(circle_at_center,rgba(145,15,44,0.25),transparent_45%)]" />
+    <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
+      <PublicHeader />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-6 md:px-8">
-          {/* NAV */}
-          <nav className="flex flex-col gap-4 rounded-2xl border border-yellow-600/20 bg-black/20 px-4 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <img
-                src={LOGO_SRC}
-                alt="The Kingdom Citizens logo"
-                className="h-12 w-12 rounded-full object-cover ring-1 ring-yellow-500/40"
-              />
+      <section className='relative overflow-hidden border-b border-yellow-900/40 bg-gradient-to-br from-[#210808] via-[#0b0505] to-black px-4 py-10 md:px-8 md:py-16'>
+        <div className='absolute inset-0 opacity-20'>
+          <div className='absolute right-10 top-20 h-72 w-72 rounded-full bg-yellow-500 blur-[120px]' />
+          <div className='absolute bottom-0 left-10 h-72 w-72 rounded-full bg-red-800 blur-[140px]' />
+        </div>
 
-              <div>
-                <p className="text-lg font-bold tracking-wide text-yellow-300">
-                  The Kingdom Citizens
-                </p>
-                <p className="text-xs text-yellow-100/70">
-                  Our address is in Christ
-                </p>
-              </div>
+        <div className='relative mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center'>
+          <div>
+            <div className='inline-flex rounded-full border border-yellow-700/60 bg-black/30 px-4 py-2 text-xs font-semibold text-yellow-300 md:text-sm'>
+              Christ-centered teaching and spiritual formation community
             </div>
 
-            <div className="flex flex-wrap gap-3 text-sm">
-              <a href="#about" className="text-gray-200 hover:text-yellow-300">
-                About
-              </a>
-              <a href="#meetings" className="text-gray-200 hover:text-yellow-300">
-                Meetings
-              </a>
-              <a href="#locations" className="text-gray-200 hover:text-yellow-300">
-                Locations
-              </a>
-              <Link href="/public/announcements" className="text-gray-200 hover:text-yellow-300">
-                Announcements
-              </Link>
-              <Link href="/public/posts" className="text-gray-200 hover:text-yellow-300">
-                Posts
-              </Link>
-              <Link href="/public/connect" className="text-gray-200 hover:text-yellow-300">
-                Connect
-              </Link>
+            <h1 className='mt-6 text-5xl font-black leading-tight tracking-tight md:text-7xl'>
+              The Kingdom <br />
+              Citizens
+            </h1>
+
+            <p className='mt-5 max-w-2xl text-base leading-8 text-gray-200 md:text-lg'>
+              A community of heavenly citizens under mission on the earth, growing in
+              Christ, in the Word, in prayer, and in spiritual formation.
+            </p>
+
+            <div className='mt-8 flex flex-wrap gap-4'>
               <Link
-                href="/login"
-                className="rounded-full border border-yellow-500/40 px-4 py-2 font-medium text-yellow-200 hover:bg-yellow-500/10"
+                href='/public/announcements'
+                className='rounded-full bg-yellow-500 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-yellow-900/30 hover:bg-yellow-400'
               >
-                Login
+                View Announcements
+              </Link>
+
+              <Link
+                href='/public/posts'
+                className='rounded-full border border-yellow-700/70 px-6 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-900/20'
+              >
+                Explore Posts
               </Link>
             </div>
-          </nav>
 
-          {/* HERO BODY */}
-          <div className="grid gap-10 py-14 md:grid-cols-2 md:items-center md:py-20">
-            <div>
-              <p className="mb-4 inline-block rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-200">
-                Christ-centered teaching and spiritual formation community
-              </p>
-
-              <h1 className="text-4xl font-extrabold leading-tight text-white md:text-6xl">
-                The Kingdom Citizens
-              </h1>
-
-              <p className="mt-4 max-w-2xl text-lg leading-8 text-[#f5e8d0]">
-                A community of heavenly citizens under mission on the earth,
-                growing in Christ, in the Word, in prayer, and in spiritual formation.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  href="/public/announcements"
-                  className="rounded-full bg-yellow-500 px-6 py-3 font-semibold text-black transition hover:bg-yellow-400"
-                >
-                  View Announcements
-                </Link>
-
-                <Link
-                  href="/public/posts"
-                  className="rounded-full border border-yellow-500/40 px-6 py-3 font-semibold text-yellow-200 transition hover:bg-yellow-500/10"
-                >
-                  Explore Posts
-                </Link>
+            <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3'>
+              <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
+                <p className='text-sm font-bold text-yellow-300'>Thursday</p>
+                <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
+                <p className='text-sm text-gray-300'>8:00 PM</p>
               </div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-yellow-600/20 bg-white/5 p-4">
-                  <p className="text-sm text-yellow-300">Thursday</p>
-                  <p className="mt-1 font-semibold text-white">Bible Study</p>
-                  <p className="text-sm text-gray-300">8:00 PM</p>
-                </div>
-
-                <div className="rounded-2xl border border-yellow-600/20 bg-white/5 p-4">
-                  <p className="text-sm text-yellow-300">Sunday</p>
-                  <p className="mt-1 font-semibold text-white">Service</p>
-                  <p className="text-sm text-gray-300">7:00 PM</p>
-                </div>
-
-                <div className="rounded-2xl border border-yellow-600/20 bg-white/5 p-4">
-                  <p className="text-sm text-yellow-300">Daily</p>
-                  <p className="mt-1 font-semibold text-white">Bible Study</p>
-                  <p className="text-sm text-gray-300">Individual study possible</p>
-                </div>
+              <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
+                <p className='text-sm font-bold text-yellow-300'>Sunday</p>
+                <h3 className='mt-2 text-lg font-bold'>Service</h3>
+                <p className='text-sm text-gray-300'>7:00 PM</p>
               </div>
-            </div>
 
-            <div>
-              <div className="overflow-hidden rounded-[2rem] border border-yellow-600/30 bg-[linear-gradient(180deg,#f8edd8_0%,#f1dfc0_100%)] p-5 text-[#2b0c0c] shadow-2xl shadow-black/40">
-                <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,#fff6e8_0%,#f7e7cd_100%)] p-6">
-                  <div className="mb-6 flex items-center gap-4">
-                    <img
-                      src={LOGO_SRC}
-                      alt="The Kingdom Citizens logo"
-                      className="h-16 w-16 rounded-full object-cover ring-1 ring-yellow-700/30"
-                    />
-
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.3em] text-[#7d1929]">
-                        The Kingdom Citizens
-                      </p>
-                      <h2 className="mt-1 text-3xl font-bold leading-tight">
-                        Tonight Prayer <span className="text-[#7d1929]">&</span> Meditation
-                      </h2>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-[#7d1929] px-5 py-4 text-center text-white">
-                    <p className="text-sm uppercase tracking-[0.25em] text-yellow-200">
-                      Meditation Title
-                    </p>
-                    <p className="mt-2 text-2xl font-bold">
-                      Walking in the Wilderness
-                    </p>
-                  </div>
-
-                  <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-[#7d1929]/15 bg-white p-4">
-                      <p className="text-sm text-[#7d1929]">Schedule</p>
-                      <p className="mt-1 font-bold">Thursday Tonight</p>
-                      <p className="text-lg">8:00 PM</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-[#7d1929]/15 bg-white p-4">
-                      <p className="text-sm text-[#7d1929]">Attendance</p>
-                      <p className="mt-1 font-bold">Join us</p>
-                      <p>In-person or online</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-[#7d1929]/15 bg-white p-4">
-                      <p className="text-sm text-[#7d1929]">Scripture</p>
-                      <p className="mt-1 font-bold">James 4:8</p>
-                      <p>Draw near to God.</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-[#7d1929]/15 bg-white p-5">
-                    <p className="text-sm uppercase tracking-[0.2em] text-[#7d1929]">
-                      Meditation Scripture
-                    </p>
-                    <p className="mt-3 text-lg leading-8">
-                      “He humbled you, causing you to hunger and then feeding you with manna.”
-                    </p>
-                    <p className="mt-2 font-semibold">Deuteronomy 8:3</p>
-                  </div>
-                </div>
+              <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
+                <p className='text-sm font-bold text-yellow-300'>Daily</p>
+                <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
+                <p className='text-sm text-gray-300'>Individual study possible</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ABOUT */}
-      <section
-        id="about"
-        className="border-t border-yellow-700/20 bg-[linear-gradient(180deg,#18070b_0%,#120609_100%)]"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
-          <div className="mb-8 text-center">
-            <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-              About
-            </p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-              What is The Kingdom Citizens?
-            </h2>
-          </div>
+          <div className='rounded-[2rem] border border-yellow-900/40 bg-gradient-to-br from-yellow-100 to-white p-5 text-black shadow-2xl shadow-black/40'>
+            <div className='rounded-[1.5rem] bg-[#120707] p-5 text-white'>
+              <div className='flex items-center gap-4'>
+                <img
+                  src='/kingdom-citizens-logo.png'
+                  alt='The Kingdom Citizens'
+                  className='h-16 w-16 rounded-full object-cover'
+                />
 
-          <div className="grid gap-8 md:grid-cols-[220px,1fr] md:items-start">
-            <div className="flex justify-center md:justify-start">
-              <img
-                src={LOGO_SRC}
-                alt="The Kingdom Citizens logo"
-                className="h-44 w-44 rounded-full object-cover ring-2 ring-yellow-500/30"
-              />
-            </div>
+                <div>
+                  <p className='text-xs uppercase tracking-[0.3em] text-yellow-400'>
+                    The Kingdom Citizens
+                  </p>
+                  <h2 className='mt-1 text-2xl font-bold'>Today</h2>
+                </div>
+              </div>
 
-            <div className="rounded-3xl border border-yellow-700/20 bg-white/5 p-6 md:p-8">
-              <p className="text-lg leading-9 text-[#f4e9d7]">
-                The Kingdom Citizens community is an online{' '}
-                <span className="font-semibold text-yellow-300">Christ-centered</span>{' '}
-                teaching and spiritual formation community of{' '}
-                <span className="font-semibold text-yellow-300">Heavenly Citizens</span>{' '}
-                under mission on the earth.
-              </p>
-
-              <p className="mt-6 text-lg leading-9 text-[#f4e9d7]">
-                They are in Christ,{' '}
-                <span className="italic text-yellow-300">above</span> while the world
-                is beneath them.
-              </p>
-
-              <div className="mt-8 space-y-4 rounded-2xl border border-yellow-700/20 bg-black/20 p-5">
-                <p className="text-lg italic text-gray-200">
-                  “Our citizenship is in heaven, from which we also eagerly wait for the Savior,
-                  the Lord Jesus Christ.”
+              <div className='mt-6 rounded-2xl bg-[#7c2630] p-5'>
+                <p className='text-xs uppercase tracking-[0.25em] text-yellow-200'>
+                  Welcome
                 </p>
-                <p className="text-right text-yellow-300">— Philippians 3:20</p>
-
-                <p className="pt-3 text-lg italic text-gray-200">
-                  “My kingdom is not of this world.”
+                <p className='mt-3 text-lg font-bold'>
+                  Growing together in Christ and in the Word.
                 </p>
-                <p className="text-right text-yellow-300">— John 18:36</p>
+              </div>
+
+              <div className='mt-5 grid grid-cols-2 gap-4'>
+                <div className='rounded-2xl bg-white/90 p-4 text-black'>
+                  <p className='text-xs text-gray-500'>Schedule</p>
+                  <p className='mt-2 font-bold'>Thursday</p>
+                  <p className='text-sm'>Bible Study</p>
+                  <p className='text-sm'>8:00 PM</p>
+                </div>
+
+                <div className='rounded-2xl bg-white/90 p-4 text-black'>
+                  <p className='text-xs text-gray-500'>Prayer</p>
+                  <p className='mt-2 font-bold'>Stand Together</p>
+                  <p className='text-sm'>Prayer Wall</p>
+                </div>
+              </div>
+
+              <div className='mt-5 rounded-2xl border border-yellow-900/40 bg-black/40 p-4'>
+                <p className='text-xs uppercase tracking-[0.25em] text-yellow-400'>
+                  Meditation Scripture
+                </p>
+                <p className='mt-3 text-sm leading-6 text-gray-300'>
+                  “He humbled you, caused you to hunger, and fed you with manna...”
+                </p>
+                <p className='mt-2 text-xs text-gray-500'>Deuteronomy 8:3</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* MEETINGS */}
-      <section
-        id="meetings"
-        className="border-t border-yellow-700/20 bg-[linear-gradient(180deg,#1a080d_0%,#15070a_100%)]"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
-          <div className="mb-8 text-center">
-            <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-              Meet With Us
+      <section className='mx-auto max-w-6xl px-4 py-10 md:px-8'>
+        <div className='mb-6'>
+          <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
+            Community Life
+          </p>
+          <h2 className='mt-2 text-3xl font-bold md:text-4xl'>
+            Enter the Kingdom Citizens platform
+          </h2>
+          <p className='mt-3 max-w-3xl text-sm leading-7 text-gray-300'>
+            Access announcements, teachings, books, meetings, prayer, and member tools.
+          </p>
+        </div>
+
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
+          <Link
+            href='/public/announcements'
+            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
+          >
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+              Official Notices
             </p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-              Weekly Gatherings
-            </h2>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-3xl border border-yellow-600/20 bg-white/5 p-6">
-              <p className="text-sm uppercase tracking-widest text-yellow-300">
-                Sunday
-              </p>
-              <h3 className="mt-3 text-2xl font-bold">Service</h3>
-              <p className="mt-2 text-gray-300">7:00 PM</p>
-            </div>
-
-            <div className="rounded-3xl border border-yellow-600/20 bg-white/5 p-6">
-              <p className="text-sm uppercase tracking-widest text-yellow-300">
-                Thursday
-              </p>
-              <h3 className="mt-3 text-2xl font-bold">
-                Bible Study / Prayer / Meditation
-              </h3>
-              <p className="mt-2 text-gray-300">8:00 PM</p>
-            </div>
-
-            <div className="rounded-3xl border border-yellow-600/20 bg-white/5 p-6">
-              <p className="text-sm uppercase tracking-widest text-yellow-300">
-                Daily
-              </p>
-              <h3 className="mt-3 text-2xl font-bold">Individual Bible Study</h3>
-              <p className="mt-2 text-gray-300">Possible / Available</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* LOCATIONS */}
-      <section
-        id="locations"
-        className="border-t border-yellow-700/20 bg-[linear-gradient(180deg,#130608_0%,#0f0507_100%)]"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
-          <div className="mb-8 text-center">
-            <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-              Locations
+            <h3 className='mt-3 text-2xl font-bold'>Announcements</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Read ministry notices, updates, and public communication.
             </p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-              Where We Gather
-            </h2>
-          </div>
+          </Link>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-3xl border border-yellow-600/20 bg-white/5 p-6">
-              <h3 className="text-2xl font-bold text-yellow-300">Online</h3>
-              <p className="mt-4 leading-8 text-gray-200">
-                The Kingdom Citizens is an online community. Members can connect through
-                the website, teaching posts, announcements, and live meeting links.
-              </p>
+          <Link
+            href='/public/posts'
+            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
+          >
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+              Teaching
+            </p>
+            <h3 className='mt-3 text-2xl font-bold'>Posts</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Read teaching posts, meditations, and community writings.
+            </p>
+          </Link>
 
-              <div className="mt-5">
-                <Link
-                  href="/public/connect"
-                  className="rounded-full border border-yellow-500/40 px-5 py-3 text-sm font-semibold text-yellow-200 hover:bg-yellow-500/10"
-                >
-                  Open Connect Page
-                </Link>
-              </div>
-            </div>
+          <Link
+            href='/public/books'
+            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
+          >
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+              Bookstore
+            </p>
+            <h3 className='mt-3 text-2xl font-bold'>Books</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Explore Kingdom Citizens books and teaching resources.
+            </p>
+          </Link>
 
-            <div className="rounded-3xl border border-yellow-600/20 bg-white/5 p-6">
-              <h3 className="text-2xl font-bold text-yellow-300">Live Meetings</h3>
-              <p className="mt-4 leading-8 text-gray-200">
-                Join scheduled meetings through the meetings page for available live gathering
-                links such as Zoom, Google Meet, or other meeting platforms.
-              </p>
+          <Link
+            href='/public/connect'
+            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
+          >
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+              Channels
+            </p>
+            <h3 className='mt-3 text-2xl font-bold'>Connect</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Visit official media channels and public links.
+            </p>
+          </Link>
 
-              <div className="mt-5">
-                <Link
-                  href="/public/meetings"
-                  className="rounded-full border border-yellow-500/40 px-5 py-3 text-sm font-semibold text-yellow-200 hover:bg-yellow-500/10"
-                >
-                  View Meeting Links
-                </Link>
-              </div>
-            </div>
-          </div>
+          <Link
+            href='/public/meetings'
+            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
+          >
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+              Gatherings
+            </p>
+            <h3 className='mt-3 text-2xl font-bold'>Meetings</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Join services, Bible studies, and live fellowship meetings.
+            </p>
+          </Link>
+
+          <Link
+            href='/login'
+            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
+          >
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+              Member Access
+            </p>
+            <h3 className='mt-3 text-2xl font-bold'>Login</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Enter the member dashboard and community tools.
+            </p>
+          </Link>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="border-t border-yellow-700/20 bg-[linear-gradient(180deg,#22090e_0%,#120607_100%)]">
-        <div className="mx-auto max-w-6xl px-4 py-16 text-center md:px-8">
-          <h2 className="text-3xl font-bold md:text-4xl">
-            Draw near to God and He will draw near to you.
+      <section className='mx-auto max-w-6xl px-4 pb-12 md:px-8'>
+        <div className='rounded-3xl border border-yellow-900/40 bg-[#120707] p-6 md:p-8'>
+          <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
+            Identity
+          </p>
+
+          <h2 className='mt-3 text-3xl font-bold'>
+            Our address is in Christ.
           </h2>
 
-          <p className="mt-4 text-gray-300">James 4:8</p>
-
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/public/announcements"
-              className="rounded-full bg-yellow-500 px-6 py-3 font-semibold text-black hover:bg-yellow-400"
-            >
-              See Announcements
-            </Link>
-
-            <Link
-              href="/login"
-              className="rounded-full border border-yellow-500/40 px-6 py-3 font-semibold text-yellow-200 hover:bg-yellow-500/10"
-            >
-              Member Login
-            </Link>
-          </div>
+          <p className='mt-4 max-w-3xl text-sm leading-7 text-gray-300 md:text-base'>
+            The Kingdom Citizens exists as a Christ-centered community for teaching,
+            prayer, formation, and Kingdom expression. We grow together under the Word,
+            in fellowship, and in the life of Christ.
+          </p>
         </div>
       </section>
+
+      <PublicFooter />
     </main>
   )
 }
