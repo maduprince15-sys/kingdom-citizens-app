@@ -55,6 +55,12 @@ const { count: unreadCount } = await supabase
       href: '/books',
       label: 'Bookstore',
     },
+{
+  title: 'Manage Books',
+  description: 'Add, edit, hide, or update bookstore resources.',
+  href: '/admin/books',
+  label: 'Admin books',
+},
     {
       title: 'Connect',
       description: 'Manage or access official ministry links and channels.',

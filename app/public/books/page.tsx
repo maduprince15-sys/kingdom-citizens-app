@@ -1,39 +1,18 @@
 import Link from 'next/link'
 import PublicFooter from '../../components/PublicFooter'
 import PublicHeader from '../../components/PublicHeader'
+import { createClient } from '../../../lib/supabase/server'
 
-const books = [
-  {
-    title: 'Grace Economy Volume 1',
-    description:
-      'A Kingdom teaching on grace, divine life, alignment, stewardship, and living from Christ as the source.',
-    status: 'Coming / Available Soon',
-    link: '/books',
-  },
-  {
-    title: 'Heavenly Citizens Volume 1',
-    description:
-      'A teaching on identity in Christ, heavenly citizenship, union with Christ, and living from above.',
-    status: 'Coming / Available Soon',
-    link: '/books',
-  },
-  {
-    title: 'Eternal Life and the Mark of the Beast',
-    description:
-      'A sober Kingdom teaching on eternal life, allegiance, identity, and the end-time beast system.',
-    status: 'Coming / Available Soon',
-    link: '/books',
-  },
-  {
-    title: 'Grace Partnership',
-    description:
-      'A Christ-centered relationship and marriage teaching beginning with purpose, identity, and alignment.',
-    status: 'In Development',
-    link: '/books',
-  },
-]
+export default async function PublicBooksPage() {
+  const supabase = await createClient()
 
-export default function PublicBooksPage() {
+  const { data: books, error } = await supabase
+    .from('books')
+    .select('*')
+    .eq('is_public', true)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: false })
+
   return (
     <main className='min-h-screen bg-[#050303] text-white'>
       <PublicHeader />
@@ -73,36 +52,74 @@ export default function PublicBooksPage() {
       </section>
 
       <section className='mx-auto max-w-6xl px-4 py-10 md:px-8'>
+        {error && <p className='mb-6 text-red-400'>Error loading books: {error.message}</p>}
+
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-          {books.map((book) => (
+          {books?.map((book) => (
             <article
-              key={book.title}
-              className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-[#050303] p-6 shadow-lg shadow-black/30'
+              key={book.id}
+              className='overflow-hidden rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-[#050303] shadow-lg shadow-black/30'
             >
-              <div className='mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500 text-xl font-black text-black'>
-                KC
-              </div>
+              {book.cover_url ? (
+                <img src={book.cover_url} alt={book.title} className='max-h-[420px] w-full object-cover' />
+              ) : (
+                <div className='flex h-56 items-center justify-center bg-[#1a0808]'>
+                  <div className='flex h-20 w-20 items-center justify-center rounded-full bg-yellow-500 text-2xl font-black text-black'>
+                    KC
+                  </div>
+                </div>
+              )}
 
-              <h2 className='text-2xl font-bold text-white'>{book.title}</h2>
+              <div className='p-6'>
+                <h2 className='text-2xl font-bold text-white'>{book.title}</h2>
 
-              <p className='mt-3 text-sm leading-7 text-gray-300'>
-                {book.description}
-              </p>
+                {book.subtitle && (
+                  <p className='mt-2 text-yellow-300'>{book.subtitle}</p>
+                )}
 
-              <p className='mt-4 inline-block rounded-full border border-yellow-800 px-3 py-1 text-xs text-yellow-300'>
-                {book.status}
-              </p>
+                {book.description && (
+                  <p className='mt-3 text-sm leading-7 text-gray-300'>
+                    {book.description}
+                  </p>
+                )}
 
-              <div className='mt-5'>
-                <Link
-                  href={book.link}
-                  className='inline-block rounded-full bg-yellow-500 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-400'
-                >
-                  View Book Area
-                </Link>
+                <div className='mt-4 flex flex-wrap gap-2'>
+                  {book.status && (
+                    <span className='rounded-full border border-yellow-800 px-3 py-1 text-xs text-yellow-300'>
+                      {book.status}
+                    </span>
+                  )}
+
+                  {book.price && (
+                    <span className='rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold text-black'>
+                      {book.price}
+                    </span>
+                  )}
+                </div>
+
+                <div className='mt-5'>
+                  {book.purchase_url ? (
+                    <a
+                      href={book.purchase_url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='inline-block rounded-full bg-yellow-500 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-400'
+                    >
+                      Buy / View Book
+                    </a>
+                  ) : (
+                    <span className='text-sm text-gray-500'>Purchase link coming soon.</span>
+                  )}
+                </div>
               </div>
             </article>
           ))}
+
+          {books?.length === 0 && (
+            <div className='rounded-2xl border border-yellow-900/30 p-6 text-gray-400'>
+              No public books yet.
+            </div>
+          )}
         </div>
       </section>
 
