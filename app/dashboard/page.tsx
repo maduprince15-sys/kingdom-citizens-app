@@ -24,6 +24,12 @@ export default async function DashboardPage() {
 
   const displayName = profile?.full_name || user.email
   const role = profile?.role || 'member'
+const { count: unreadCount } = await supabase
+  .from('app_messages')
+  .select('id', { count: 'exact', head: true })
+  .eq('recipient_id', user.id)
+  .is('read_at', null)
+  .is('recipient_archived_at', null)
 
   const cards = [
  {
@@ -33,12 +39,11 @@ export default async function DashboardPage() {
   label: 'Member profile',
  },
 {
-  title: 'Messages',
-  description: 'Read inbox messages and send official messages to members.',
+  title: `Messages${unreadCount ? ` (${unreadCount} unread)` : ''}`,
+  description: 'Read inbox messages and send messages to board members.',
   href: '/messages',
   label: 'Inbox',
-},
-    {
+},    {
       title: 'Members',
       description: 'View members, roles, and membership information.',
       href: '/members',

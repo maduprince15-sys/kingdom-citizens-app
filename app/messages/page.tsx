@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
+import ArchiveMessageButton from './ArchiveMessageButton'
 
 export default async function MessagesPage() {
   const supabase = await createClient()
@@ -21,12 +22,13 @@ export default async function MessagesPage() {
     .single()
 
   const role = profile?.role ?? 'member'
-  const canSend = role === 'owner' || role === 'admin'
+  const canSend = ['owner', 'admin', 'moderator', 'teacher', 'member'].includes(role)
 
   const { data: messages, error } = await supabase
     .from('app_messages')
-    .select('id, subject, body, read_at, created_at, sender_id, recipient_id')
+    .select('id, subject, body, read_at, created_at, sender_name, sender_id, recipient_id')
     .eq('recipient_id', user.id)
+    .is('recipient_archived_at', null)
     .order('created_at', { ascending: false })
 
   return (
@@ -39,9 +41,9 @@ export default async function MessagesPage() {
 
           <div className='mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
             <div>
-              <h1 className='text-3xl font-bold md:text-5xl'>Messages</h1>
+              <h1 className='text-3xl font-bold md:text-5xl'>Inbox</h1>
               <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300'>
-                Your member inbox for official messages from The Kingdom Citizens.
+                Your member inbox for official and board communications.
               </p>
             </div>
 
@@ -53,12 +55,19 @@ export default async function MessagesPage() {
                 Dashboard
               </Link>
 
+              <Link
+                href='/messages/sent'
+                className='rounded-full border border-yellow-700/70 px-4 py-2 text-sm text-yellow-300 hover:bg-yellow-700/20'
+              >
+                Sent
+              </Link>
+
               {canSend && (
                 <Link
                   href='/messages/new'
                   className='rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-400'
                 >
-                  Send Message
+                  New Message
                 </Link>
               )}
             </div>
@@ -78,39 +87,48 @@ export default async function MessagesPage() {
             const unread = !message.read_at
 
             return (
-              <Link
+              <article
                 key={message.id}
-                href={`/messages/${message.id}`}
-                className='block rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-[#050303] p-5 shadow-lg shadow-black/30 transition hover:border-yellow-600/70'
+                className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-[#050303] p-5 shadow-lg shadow-black/30'
               >
-                <div className='flex flex-wrap items-center gap-2'>
-                  {unread && (
-                    <span className='rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold uppercase text-black'>
-                      Unread
+                <Link href={`/messages/${message.id}`} className='block'>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    {unread && (
+                      <span className='rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold uppercase text-black'>
+                        Unread
+                      </span>
+                    )}
+
+                    <span className='rounded-full border border-yellow-900/60 px-3 py-1 text-xs text-yellow-300'>
+                      Inbox
                     </span>
-                  )}
+                  </div>
 
-                  <span className='rounded-full border border-yellow-900/60 px-3 py-1 text-xs text-yellow-300'>
-                    Inbox
-                  </span>
+                  <h2 className='mt-4 text-xl font-bold'>{message.subject}</h2>
+
+                  <p className='mt-2 text-sm text-gray-400'>
+                    From: {message.sender_name || 'The Kingdom Citizens'}
+                  </p>
+
+                  <p className='mt-2 line-clamp-2 text-sm leading-6 text-gray-300'>
+                    {message.body}
+                  </p>
+
+                  <p className='mt-4 text-xs text-gray-500'>
+                    {new Date(message.created_at).toLocaleString()}
+                  </p>
+                </Link>
+
+                <div className='mt-4'>
+                  <ArchiveMessageButton id={message.id} box='inbox' />
                 </div>
-
-                <h2 className='mt-4 text-xl font-bold'>{message.subject}</h2>
-
-                <p className='mt-2 line-clamp-2 text-sm leading-6 text-gray-300'>
-                  {message.body}
-                </p>
-
-                <p className='mt-4 text-xs text-gray-500'>
-                  {new Date(message.created_at).toLocaleString()}
-                </p>
-              </Link>
+              </article>
             )
           })}
 
           {messages?.length === 0 && (
             <div className='rounded-2xl border border-yellow-900/30 p-6 text-gray-400'>
-              No messages yet.
+              No inbox messages.
             </div>
           )}
         </div>
