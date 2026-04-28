@@ -85,6 +85,12 @@ const { count: unreadCount } = await supabase
   href: '/admin/meetings',
   label: 'Admin meetings',
 },
+{
+  title: 'Prayer Wall',
+  description: 'Share prayer requests and stand with members in prayer.',
+  href: '/prayers',
+  label: 'Prayer',
+},
     {
       title: 'Announcements',
       description: 'Create, read, edit, pin, and manage official announcements.',

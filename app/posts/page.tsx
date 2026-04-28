@@ -4,6 +4,7 @@ import { createClient } from '../../lib/supabase/server'
 import { canCreatePosts, canModeratePosts } from '../../lib/permissions'
 import CreatePostForm from './CreatePostForm'
 import DeletePostButton from './DeletePostButton'
+import PostEngagement from './PostEngagement'
 
 export default async function PostsPage() {
   const supabase = await createClient()
@@ -24,11 +25,35 @@ export default async function PostsPage() {
     .single()
 
   const role = profile?.role ?? 'member'
+  const canModerate = canModeratePosts(role)
 
   const { data: posts, error } = await supabase
     .from('app_posts')
     .select('id, title, content, image_url, video_url, author_id, author_name, created_at')
     .order('created_at', { ascending: false })
+
+  const { data: comments } = await supabase
+    .from('app_post_comments')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  const { data: reactions } = await supabase
+    .from('app_post_reactions')
+    .select('post_id, reaction_type')
+
+  function getComments(postId: string) {
+    return comments?.filter((comment) => comment.post_id === postId) || []
+  }
+
+  function getReactionCounts(postId: string) {
+    const postReactions = reactions?.filter((reaction) => reaction.post_id === postId) || []
+
+    return {
+      amen: postReactions.filter((reaction) => reaction.reaction_type === 'amen').length,
+      praying: postReactions.filter((reaction) => reaction.reaction_type === 'praying').length,
+      thank_god: postReactions.filter((reaction) => reaction.reaction_type === 'thank_god').length,
+    }
+  }
 
   if (error) {
     return (
@@ -93,6 +118,14 @@ export default async function PostsPage() {
 
                 {canDelete && <DeletePostButton id={item.id} />}
               </div>
+
+              <PostEngagement
+                postId={item.id}
+                comments={getComments(item.id)}
+                counts={getReactionCounts(item.id)}
+                canModerate={canModerate}
+                currentUserId={user.id}
+              />
             </article>
           )
         })}
