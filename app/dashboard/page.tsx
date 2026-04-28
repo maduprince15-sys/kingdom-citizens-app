@@ -26,6 +26,12 @@ export default async function DashboardPage() {
   const role = profile?.role || 'member'
 
   const cards = [
+ {
+  title: 'Profile',
+  description: 'Update your full name, phone number, and member information.',
+  href: '/profile',
+  label: 'Member profile',
+ },
     {
       title: 'Members',
       description: 'View members, roles, and membership information.',
