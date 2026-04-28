@@ -26,7 +26,7 @@ export default async function MessageDetailPage({ params }: Props) {
     .single()
 
   const role = currentProfile?.role ?? 'member'
-  const canReply = role === 'owner' || role === 'admin'
+const canReply = true
 
   const { data: message, error } = await supabase
     .from('app_messages')

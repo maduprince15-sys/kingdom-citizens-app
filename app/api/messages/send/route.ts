@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
 
+const BOARD_ROLES = ['owner', 'admin', 'moderator', 'teacher']
+
 export async function POST(request: Request) {
   const supabase = await createClient()
 
@@ -13,18 +15,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: senderProfile, error: profileError } = await supabase
     .from('profiles')
     .select('role, full_name, email')
     .eq('id', user.id)
     .single()
 
-  if (profileError || !profile) {
+  if (profileError || !senderProfile) {
     return NextResponse.json({ error: 'Could not load sender profile.' }, { status: 400 })
-  }
-
-  if (!['owner', 'admin'].includes(profile.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const bodyData = await request.json()
@@ -41,9 +39,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Recipient is required.' }, { status: 400 })
   }
 
-  const senderName = profile.full_name || profile.email || user.email || 'The Kingdom Citizens'
+  const senderRole = senderProfile.role || 'member'
+  const senderName =
+    senderProfile.full_name ||
+    senderProfile.email ||
+    user.email ||
+    'The Kingdom Citizens'
+
+  const senderIsOwnerOrAdmin = ['owner', 'admin'].includes(senderRole)
 
   if (recipientId === 'all') {
+    if (!senderIsOwnerOrAdmin) {
+      return NextResponse.json(
+        { error: 'Only owners and admins can broadcast to all members.' },
+        { status: 403 }
+      )
+    }
+
     const { data: recipients, error: recipientsError } = await supabase
       .from('profiles')
       .select('id')
@@ -76,6 +88,25 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true })
+  }
+
+  const { data: recipientProfile, error: recipientError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', recipientId)
+    .single()
+
+  if (recipientError || !recipientProfile) {
+    return NextResponse.json({ error: 'Recipient not found.' }, { status: 404 })
+  }
+
+  const recipientRole = recipientProfile.role || 'member'
+
+  if (!senderIsOwnerOrAdmin && !BOARD_ROLES.includes(recipientRole)) {
+    return NextResponse.json(
+      { error: 'Members can only send messages to board members.' },
+      { status: 403 }
+    )
   }
 
   const { error: insertError } = await supabase.from('app_messages').insert({

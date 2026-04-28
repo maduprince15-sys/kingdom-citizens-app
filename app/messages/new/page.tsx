@@ -31,27 +31,17 @@ export default async function NewMessagePage({ searchParams }: Props) {
     .single()
 
   const role = profile?.role ?? 'member'
+  const canBroadcast = role === 'owner' || role === 'admin'
 
-  if (!['owner', 'admin'].includes(role)) {
-    return (
-      <main className='min-h-screen bg-[#050303] p-4 text-white md:p-8'>
-        <div className='mx-auto max-w-3xl'>
-          <h1 className='text-3xl font-bold'>Access denied</h1>
-          <p className='mt-3 text-gray-300'>
-            Only owners and admins can send messages.
-          </p>
-          <Link href='/messages' className='mt-4 inline-block text-yellow-300 underline'>
-            Back to Messages
-          </Link>
-        </div>
-      </main>
-    )
-  }
-
-  const { data: recipients } = await supabase
+  const query = supabase
     .from('profiles')
     .select('id, full_name, email, role')
+    .neq('id', user.id)
     .order('created_at', { ascending: false })
+
+  const { data: recipients } = canBroadcast
+    ? await query
+    : await query.in('role', ['owner', 'admin', 'moderator', 'teacher'])
 
   const defaultSubject = params.subject
     ? decodeURIComponent(params.subject)
@@ -70,7 +60,9 @@ export default async function NewMessagePage({ searchParams }: Props) {
           </h1>
 
           <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300'>
-            Send a direct message to one member or broadcast to all members.
+            {canBroadcast
+              ? 'Send a direct message to one member or broadcast to all members.'
+              : 'Send a message to The Kingdom Citizens board members.'}
           </p>
         </div>
       </section>
@@ -79,7 +71,8 @@ export default async function NewMessagePage({ searchParams }: Props) {
         <div className='rounded-2xl border border-yellow-900/40 bg-[#120707] p-5 md:p-7'>
           <MessageForm
             recipients={recipients || []}
-            defaultRecipientId={params.recipient || 'all'}
+            canBroadcast={canBroadcast}
+            defaultRecipientId={params.recipient || (canBroadcast ? 'all' : recipients?.[0]?.id || '')}
             defaultSubject={defaultSubject}
             parentMessageId={params.parent}
           />

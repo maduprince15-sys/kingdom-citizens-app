@@ -12,6 +12,7 @@ type Profile = {
 
 type Props = {
   recipients: Profile[]
+  canBroadcast: boolean
   defaultRecipientId?: string
   defaultSubject?: string
   parentMessageId?: string
@@ -19,13 +20,16 @@ type Props = {
 
 export default function MessageForm({
   recipients,
-  defaultRecipientId = 'all',
+  canBroadcast,
+  defaultRecipientId = '',
   defaultSubject = '',
   parentMessageId,
 }: Props) {
   const router = useRouter()
 
-  const [recipientId, setRecipientId] = useState(defaultRecipientId)
+  const [recipientId, setRecipientId] = useState(
+    defaultRecipientId || (canBroadcast ? 'all' : recipients[0]?.id || '')
+  )
   const [subject, setSubject] = useState(defaultSubject)
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(false)
@@ -73,12 +77,16 @@ export default function MessageForm({
     <form onSubmit={handleSubmit} className='space-y-5'>
       <div>
         <label className='mb-2 block text-sm text-gray-300'>Recipient</label>
+
         <select
           value={recipientId}
           onChange={(e) => setRecipientId(e.target.value)}
           className='w-full rounded border border-gray-300 bg-white p-3 text-black'
+          required
         >
-          <option value='all'>Broadcast to all members</option>
+          {canBroadcast && (
+            <option value='all'>Broadcast to all members</option>
+          )}
 
           {recipients.map((profile) => (
             <option key={profile.id} value={profile.id}>
@@ -87,9 +95,21 @@ export default function MessageForm({
           ))}
         </select>
 
-        {recipientId === 'all' && (
+        {canBroadcast && recipientId === 'all' && (
           <p className='mt-2 text-sm text-yellow-300'>
             This will send the message to every member except you.
+          </p>
+        )}
+
+        {!canBroadcast && (
+          <p className='mt-2 text-sm text-yellow-300'>
+            Members can send messages to board members only.
+          </p>
+        )}
+
+        {!canBroadcast && recipients.length === 0 && (
+          <p className='mt-2 text-sm text-red-400'>
+            No board members are available to receive messages yet.
           </p>
         )}
       </div>
@@ -119,7 +139,7 @@ export default function MessageForm({
 
       <button
         type='submit'
-        disabled={loading}
+        disabled={loading || (!canBroadcast && recipients.length === 0)}
         className='rounded-full bg-yellow-500 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-400 disabled:opacity-50'
       >
         {loading
