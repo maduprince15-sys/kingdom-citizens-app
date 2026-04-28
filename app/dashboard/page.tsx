@@ -32,6 +32,12 @@ export default async function DashboardPage() {
   href: '/profile',
   label: 'Member profile',
  },
+{
+  title: 'Messages',
+  description: 'Read inbox messages and send official messages to members.',
+  href: '/messages',
+  label: 'Inbox',
+},
     {
       title: 'Members',
       description: 'View members, roles, and membership information.',
