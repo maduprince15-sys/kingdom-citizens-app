@@ -123,13 +123,7 @@ export default async function HomePage() {
                   Growing together in Christ and in the Word.
                 </p>
               </div>
-<Link href='/public/giving' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-  <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Giving</p>
-  <h3 className='mt-3 text-2xl font-bold'>Eternal Wealth</h3>
-  <p className='mt-3 text-sm leading-6 text-gray-300'>
-    Make for yourselves eternal wealth with unrighteous mammon, and store your treasure where decay cannot destroy.
-  </p>
-</Link>
+
               <div className='mt-5 grid grid-cols-2 gap-4'>
                 <div className='rounded-2xl bg-white/90 p-4 text-black'>
                   <p className='text-xs text-gray-500'>Schedule</p>
@@ -171,7 +165,7 @@ export default async function HomePage() {
             Enter the Kingdom Citizens platform
           </h2>
           <p className='mt-3 max-w-3xl text-sm leading-7 text-gray-300'>
-            Access announcements, teachings, books, meetings, prayer, and member tools.
+            Access announcements, teachings, books, meetings, prayer, giving, and member tools.
           </p>
         </div>
 
@@ -204,6 +198,14 @@ export default async function HomePage() {
             <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Gatherings</p>
             <h3 className='mt-3 text-2xl font-bold'>Meetings</h3>
             <p className='mt-3 text-sm leading-6 text-gray-300'>Join services, Bible studies, and live fellowship meetings.</p>
+          </Link>
+
+          <Link href='/public/giving' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Giving</p>
+            <h3 className='mt-3 text-2xl font-bold'>Eternal Wealth</h3>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Make for yourselves eternal wealth with unrighteous mammon, and store your treasure where decay cannot destroy.
+            </p>
           </Link>
 
           <Link href='/login' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
