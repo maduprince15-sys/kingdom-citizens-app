@@ -37,7 +37,7 @@ export default function PublicHeader() {
         </div>
 
         {open && (
-          <nav className='mx-auto mt-4 max-w-6xl rounded-2xl border border-yellow-900/40 bg-black/80 p-4'>
+          <nav className='mx-auto mt-4 max-h-[65vh] max-w-6xl overflow-y-auto rounded-2xl border border-yellow-900/40 bg-black/90 p-4 pb-28'>
             <div className='grid grid-cols-1 gap-3 text-sm md:grid-cols-3'>
               <Link href='/' className='rounded-lg p-3 hover:bg-yellow-900/20'>
                 Home
@@ -51,9 +51,10 @@ export default function PublicHeader() {
                 Posts
               </Link>
 
-<Link href='/public/giving' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-  Giving
-</Link>
+              <Link href='/public/giving' className='rounded-lg p-3 hover:bg-yellow-900/20'>
+                Giving
+              </Link>
+
               <Link href='/public/books' className='rounded-lg p-3 hover:bg-yellow-900/20'>
                 Books
               </Link>
@@ -70,12 +71,12 @@ export default function PublicHeader() {
                 Prayer Wall
               </Link>
 
-              <Link href='/login' className='rounded-lg bg-yellow-500 p-3 font-bold text-black hover:bg-yellow-400'>
-                Login
+              <Link href='/dashboard' className='rounded-lg bg-yellow-500 p-3 font-bold text-black hover:bg-yellow-400'>
+                Dashboard
               </Link>
 
-              <Link href='/dashboard' className='rounded-lg border border-yellow-800 p-3 text-yellow-300 hover:bg-yellow-900/20'>
-                Dashboard
+              <Link href='/login' className='rounded-lg border border-yellow-800 p-3 text-yellow-300 hover:bg-yellow-900/20'>
+                Login
               </Link>
             </div>
           </nav>
