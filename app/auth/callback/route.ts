@@ -12,6 +12,7 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
+
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
@@ -20,24 +21,18 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser()
 
       if (user) {
-       await supabase.from('profiles').upsert({
-  id: user.id,
-  email: user.email,
-  full_name:
-    user.user_metadata?.full_name ||
-    user.user_metadata?.name ||
-    user.user_metadata?.display_name ||
-    'New Member',
-  phone:
-    user.user_metadata?.phone_number ||
-    user.user_metadata?.phone ||
-    null,
-  role: 'member',
-})
+        await supabase.from('profiles').upsert({
           id: user.id,
           email: user.email,
-          full_name: user.user_metadata?.full_name || 'New Member',
-          phone: user.user_metadata?.phone_number || user.user_metadata?.phone || null,
+          full_name:
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.user_metadata?.display_name ||
+            'New Member',
+          phone:
+            user.user_metadata?.phone_number ||
+            user.user_metadata?.phone ||
+            null,
           role: 'member',
         })
       }

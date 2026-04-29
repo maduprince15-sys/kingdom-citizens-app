@@ -1,15 +1,9 @@
 ﻿'use client'
-import GoogleLoginButton from '../components/GoogleLoginButton'
+
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
-<div className='my-4 flex items-center gap-3'>
-  <div className='h-px flex-1 bg-gray-700' />
-  <span className='text-sm text-gray-400'>or</span>
-  <div className='h-px flex-1 bg-gray-700' />
-</div>
-
-<GoogleLoginButton />
+import GoogleLoginButton from '../components/GoogleLoginButton'
 
 const getURL = () => {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -110,6 +104,14 @@ export default function RegisterPage() {
           {loading ? 'Creating account...' : 'Create account'}
         </button>
       </form>
+
+      <div className='my-4 flex items-center gap-3'>
+        <div className='h-px flex-1 bg-gray-700' />
+        <span className='text-sm text-gray-400'>or</span>
+        <div className='h-px flex-1 bg-gray-700' />
+      </div>
+
+      <GoogleLoginButton />
 
       {message && <p className='mt-4 text-sm text-white'>{message}</p>}
 
