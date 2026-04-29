@@ -28,25 +28,11 @@ export default async function PublicGivingPage() {
           </h1>
 
           <p className='mt-4 max-w-3xl text-sm leading-7 text-gray-300 md:text-base'>
-            Support The Kingdom Citizens work, teachings, meetings, books, prayer,
-            and ministry outreach. Give through the approved options listed below.
+            Make for yourselves eternal wealth with unrighteous mammon, and store your
+treasure where moth, rust, and decay cannot destroy. Give through the approved
+options listed below.
           </p>
 
-          <div className='mt-8 flex flex-wrap gap-4'>
-            <Link
-              href='/public/connect'
-              className='rounded-full border border-yellow-700/70 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-700/20'
-            >
-              Connect With Us
-            </Link>
-
-            <Link
-              href='/public/meetings'
-              className='rounded-full bg-yellow-500 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-400'
-            >
-              Join Meetings
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -67,8 +53,8 @@ export default async function PublicGivingPage() {
           </h2>
 
           <p className='mt-3 max-w-3xl text-sm leading-7 text-gray-300'>
-            Giving should be done willingly, faithfully, and with a clear heart before God.
-            Use only the official giving options displayed on this page.
+            Earthly wealth can serve eternal purpose when it is submitted to God. Use only
+the official giving options displayed on this page.
           </p>
         </div>
 
