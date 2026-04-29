@@ -1,8 +1,17 @@
 import Link from 'next/link'
 import PublicHeader from './components/PublicHeader'
 import PublicFooter from './components/PublicFooter'
+import { createClient } from '../lib/supabase/server'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient()
+
+  const { data: meetings } = await supabase
+    .from('meetings')
+    .select('title, platform, meeting_url, description, meeting_date, meeting_time')
+    .order('meeting_date', { ascending: true })
+    .limit(3)
+
   return (
     <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
       <PublicHeader />
@@ -46,23 +55,46 @@ export default function HomePage() {
             </div>
 
             <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3'>
-              <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
-                <p className='text-sm font-bold text-yellow-300'>Thursday</p>
-                <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
-                <p className='text-sm text-gray-300'>8:00 PM</p>
-              </div>
+              {meetings && meetings.length > 0 ? (
+                meetings.map((meeting) => (
+                  <div
+                    key={`${meeting.title}-${meeting.meeting_date}-${meeting.meeting_time}`}
+                    className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'
+                  >
+                    <p className='text-sm font-bold text-yellow-300'>
+                      {meeting.meeting_date || 'Scheduled'}
+                    </p>
 
-              <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
-                <p className='text-sm font-bold text-yellow-300'>Sunday</p>
-                <h3 className='mt-2 text-lg font-bold'>Service</h3>
-                <p className='text-sm text-gray-300'>7:00 PM</p>
-              </div>
+                    <h3 className='mt-2 text-lg font-bold'>
+                      {meeting.title}
+                    </h3>
 
-              <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
-                <p className='text-sm font-bold text-yellow-300'>Daily</p>
-                <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
-                <p className='text-sm text-gray-300'>Individual study possible</p>
-              </div>
+                    <p className='text-sm text-gray-300'>
+                      {meeting.meeting_time || 'Time to be announced'}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
+                    <p className='text-sm font-bold text-yellow-300'>Thursday</p>
+                    <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
+                    <p className='text-sm text-gray-300'>8:00 PM</p>
+                  </div>
+
+                  <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
+                    <p className='text-sm font-bold text-yellow-300'>Sunday</p>
+                    <h3 className='mt-2 text-lg font-bold'>Service</h3>
+                    <p className='text-sm text-gray-300'>7:00 PM</p>
+                  </div>
+
+                  <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
+                    <p className='text-sm font-bold text-yellow-300'>Daily</p>
+                    <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
+                    <p className='text-sm text-gray-300'>Individual study possible</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -95,9 +127,12 @@ export default function HomePage() {
               <div className='mt-5 grid grid-cols-2 gap-4'>
                 <div className='rounded-2xl bg-white/90 p-4 text-black'>
                   <p className='text-xs text-gray-500'>Schedule</p>
-                  <p className='mt-2 font-bold'>Thursday</p>
-                  <p className='text-sm'>Bible Study</p>
-                  <p className='text-sm'>8:00 PM</p>
+                  <p className='mt-2 font-bold'>
+                    {meetings?.[0]?.title || 'Thursday'}
+                  </p>
+                  <p className='text-sm'>
+                    {meetings?.[0]?.meeting_time || 'Bible Study · 8:00 PM'}
+                  </p>
                 </div>
 
                 <div className='rounded-2xl bg-white/90 p-4 text-black'>
@@ -135,82 +170,40 @@ export default function HomePage() {
         </div>
 
         <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-          <Link
-            href='/public/announcements'
-            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
-          >
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Official Notices
-            </p>
+          <Link href='/public/announcements' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Official Notices</p>
             <h3 className='mt-3 text-2xl font-bold'>Announcements</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Read ministry notices, updates, and public communication.
-            </p>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>Read ministry notices, updates, and public communication.</p>
           </Link>
 
-          <Link
-            href='/public/posts'
-            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
-          >
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Teaching
-            </p>
+          <Link href='/public/posts' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Teaching</p>
             <h3 className='mt-3 text-2xl font-bold'>Posts</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Read teaching posts, meditations, and community writings.
-            </p>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>Read teaching posts, meditations, and community writings.</p>
           </Link>
 
-          <Link
-            href='/public/books'
-            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
-          >
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Bookstore
-            </p>
+          <Link href='/public/books' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Bookstore</p>
             <h3 className='mt-3 text-2xl font-bold'>Books</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Explore Kingdom Citizens books and teaching resources.
-            </p>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>Explore Kingdom Citizens books and teaching resources.</p>
           </Link>
 
-          <Link
-            href='/public/connect'
-            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
-          >
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Channels
-            </p>
+          <Link href='/public/connect' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Channels</p>
             <h3 className='mt-3 text-2xl font-bold'>Connect</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Visit official media channels and public links.
-            </p>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>Visit official media channels and public links.</p>
           </Link>
 
-          <Link
-            href='/public/meetings'
-            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
-          >
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Gatherings
-            </p>
+          <Link href='/public/meetings' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Gatherings</p>
             <h3 className='mt-3 text-2xl font-bold'>Meetings</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Join services, Bible studies, and live fellowship meetings.
-            </p>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>Join services, Bible studies, and live fellowship meetings.</p>
           </Link>
 
-          <Link
-            href='/login'
-            className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'
-          >
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Member Access
-            </p>
+          <Link href='/login' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
+            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Member Access</p>
             <h3 className='mt-3 text-2xl font-bold'>Login</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Enter the member dashboard and community tools.
-            </p>
+            <p className='mt-3 text-sm leading-6 text-gray-300'>Enter the member dashboard and community tools.</p>
           </Link>
         </div>
       </section>

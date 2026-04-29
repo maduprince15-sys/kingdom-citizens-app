@@ -1,11 +1,33 @@
 import Link from 'next/link'
-import { requireOwnerOrAdmin } from '../AdminGuard'
+import { redirect } from 'next/navigation'
+import { createClient } from '../../../lib/supabase/server'
 import MeetingForm from './MeetingForm'
 
 export default async function AdminMeetingsPage() {
-  const { supabase } = await requireOwnerOrAdmin()
+  const supabase = await createClient()
 
-  const { data: meetings, error } = await supabase
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    redirect('/login')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const role = profile?.role ?? 'member'
+
+  if (!['owner', 'admin', 'moderator'].includes(role)) {
+    redirect('/dashboard')
+  }
+
+  const { data: meetings, error: meetingsError } = await supabase
     .from('meetings')
     .select('*')
     .order('meeting_date', { ascending: true })
@@ -21,6 +43,9 @@ export default async function AdminMeetingsPage() {
             <h1 className='mt-2 text-3xl font-bold md:text-5xl'>
               Manage Meetings
             </h1>
+            <p className='mt-3 text-sm text-gray-400'>
+              Add, edit, or remove live meeting links, dates, and times.
+            </p>
           </div>
 
           <Link href='/dashboard' className='rounded-full border border-yellow-700 px-4 py-2 text-yellow-300'>
@@ -28,7 +53,7 @@ export default async function AdminMeetingsPage() {
           </Link>
         </div>
 
-        {error && <p className='mb-4 text-red-400'>{error.message}</p>}
+        {meetingsError && <p className='mb-4 text-red-400'>{meetingsError.message}</p>}
 
         <MeetingForm meetings={meetings || []} />
       </div>

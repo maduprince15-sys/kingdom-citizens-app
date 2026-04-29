@@ -109,9 +109,20 @@ const adminCards = [
   },
 ]
 
+const moderatorCards = [
+  {
+    title: 'Manage Meetings',
+    description: 'Add, edit, or remove live meeting links and schedules.',
+    href: '/admin/meetings',
+    label: 'Meeting manager',
+  },
+]
+
 const cards = ['owner', 'admin'].includes(role)
   ? [...memberCards, ...adminCards]
-  : memberCards
+  : role === 'moderator'
+    ? [...memberCards, ...moderatorCards]
+    : memberCards
 
   return (
     <main className='min-h-screen bg-[#050303] text-white'>
