@@ -14,7 +14,7 @@ export default async function PublicGivingPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
+    <main className='min-h-screen bg-[#050303] pb-36 text-white md:pb-0'>
       <PublicHeader />
 
       <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-10 md:px-8'>
@@ -32,10 +32,10 @@ export default async function PublicGivingPage() {
             and ministry outreach. Give through the approved options listed below.
           </p>
 
-          <div className='mt-6 flex flex-wrap gap-3'>
+          <div className='mt-8 flex flex-wrap gap-4'>
             <Link
               href='/public/connect'
-              className='rounded-full border border-yellow-700/70 px-5 py-3 text-sm text-yellow-300 hover:bg-yellow-700/20'
+              className='rounded-full border border-yellow-700/70 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-700/20'
             >
               Connect With Us
             </Link>
@@ -50,7 +50,7 @@ export default async function PublicGivingPage() {
         </div>
       </section>
 
-      <section className='mx-auto max-w-6xl px-4 py-10 md:px-8'>
+      <section className='mx-auto max-w-6xl px-4 py-10 pb-36 md:px-8 md:pb-10'>
         {error && (
           <div className='mb-6 rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
             Error loading giving options: {error.message}
