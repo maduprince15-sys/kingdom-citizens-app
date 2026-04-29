@@ -80,6 +80,12 @@ const { count: unreadCount } = await supabase
     href: '/prayers',
     label: 'Prayer',
   },
+{
+  title: 'Calendar',
+  description: 'View important dates, programs, meetings, and appointments.',
+  href: '/calendar',
+  label: 'Important dates',
+},
 ]
 
 const adminCards = [
@@ -107,6 +113,12 @@ const adminCards = [
     href: '/admin/meetings',
     label: 'Admin meetings',
   },
+{
+  title: 'Manage Calendar',
+  description: 'Add, edit, or remove important dates and event reminders.',
+  href: '/admin/calendar',
+  label: 'Calendar manager',
+},
 ]
 
 const moderatorCards = [
@@ -116,6 +128,12 @@ const moderatorCards = [
     href: '/admin/meetings',
     label: 'Meeting manager',
   },
+{
+  title: 'Manage Calendar',
+  description: 'Add, edit, or remove important dates and event reminders.',
+  href: '/admin/calendar',
+  label: 'Calendar manager',
+},
 ]
 
 const cards = ['owner', 'admin'].includes(role)
