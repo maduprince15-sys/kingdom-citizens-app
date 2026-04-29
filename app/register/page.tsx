@@ -1,7 +1,8 @@
 ﻿'use client'
 
 import Link from 'next/link'
-import { FormEvent, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { FormEvent, useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 import GoogleLoginButton from '../components/GoogleLoginButton'
 
@@ -20,6 +21,7 @@ const getURL = () => {
 }
 
 export default function RegisterPage() {
+  const router = useRouter()
   const supabase = createClient()
 
   const [fullName, setFullName] = useState('')
@@ -27,7 +29,25 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkingUser, setCheckingUser] = useState(true)
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    async function checkUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        router.replace('/dashboard')
+        return
+      }
+
+      setCheckingUser(false)
+    }
+
+    checkUser()
+  }, [router, supabase])
 
   async function handleRegister(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -56,68 +76,137 @@ export default function RegisterPage() {
     setLoading(false)
   }
 
+  if (checkingUser) {
+    return (
+      <main className='flex min-h-screen items-center justify-center bg-[#050303] p-6 text-white'>
+        <div className='rounded-2xl border border-yellow-900/40 bg-[#120707] p-6 text-center'>
+          <p className='text-yellow-300'>Checking account...</p>
+        </div>
+      </main>
+    )
+  }
+
   return (
-    <main className='mx-auto max-w-md p-6 text-white'>
-      <h1 className='mb-6 text-2xl font-bold'>Register</h1>
+    <main className='min-h-screen bg-[#050303] text-white'>
+      <section className='flex min-h-screen items-center justify-center px-4 py-10'>
+        <div className='w-full max-w-md overflow-hidden rounded-3xl border border-yellow-900/40 bg-[#120707] shadow-2xl shadow-black/50'>
+          <div className='bg-gradient-to-br from-black via-[#180707] to-[#260909] p-6 text-center'>
+            <img
+              src='/kingdom-citizens-logo.png'
+              alt='The Kingdom Citizens'
+              className='mx-auto h-24 w-24 rounded-full object-cover'
+            />
 
-      <form onSubmit={handleRegister} className='space-y-4'>
-        <input
-          type='text'
-          placeholder='Enter your full name'
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className='w-full rounded border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
-          required
-        />
+            <p className='mt-4 text-xs uppercase tracking-[0.35em] text-yellow-500'>
+              The Kingdom Citizens
+            </p>
 
-        <input
-          type='text'
-          placeholder='Enter your phone number'
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className='w-full rounded border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
-        />
+            <h1 className='mt-2 text-3xl font-black'>
+              Create Account
+            </h1>
 
-        <input
-          type='email'
-          placeholder='Enter your email'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className='w-full rounded border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
-          required
-        />
+            <p className='mt-3 text-sm leading-6 text-gray-300'>
+              Join the Kingdom Citizens member platform for teachings, prayer, calendar, messages, and community life.
+            </p>
+          </div>
 
-        <input
-          type='password'
-          placeholder='Enter your password'
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className='w-full rounded border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
-          required
-        />
+          <div className='p-6'>
+            <form onSubmit={handleRegister} className='space-y-4'>
+              <div>
+                <label className='mb-2 block text-sm text-gray-300'>
+                  Full Name
+                </label>
+                <input
+                  type='text'
+                  placeholder='Enter your full name'
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className='w-full rounded-xl border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
+                  required
+                />
+              </div>
 
-        <button
-          type='submit'
-          disabled={loading}
-          className='w-full rounded bg-blue-600 p-3 text-white disabled:opacity-50'
-        >
-          {loading ? 'Creating account...' : 'Create account'}
-        </button>
-      </form>
+              <div>
+                <label className='mb-2 block text-sm text-gray-300'>
+                  Phone Number
+                </label>
+                <input
+                  type='text'
+                  placeholder='Enter your phone number'
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className='w-full rounded-xl border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
+                />
+              </div>
 
-      <div className='my-4 flex items-center gap-3'>
-        <div className='h-px flex-1 bg-gray-700' />
-        <span className='text-sm text-gray-400'>or</span>
-        <div className='h-px flex-1 bg-gray-700' />
-      </div>
+              <div>
+                <label className='mb-2 block text-sm text-gray-300'>
+                  Email
+                </label>
+                <input
+                  type='email'
+                  placeholder='Enter your email'
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className='w-full rounded-xl border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
+                  required
+                />
+              </div>
 
-      <GoogleLoginButton />
+              <div>
+                <label className='mb-2 block text-sm text-gray-300'>
+                  Password
+                </label>
+                <input
+                  type='password'
+                  placeholder='Enter your password'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className='w-full rounded-xl border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
+                  required
+                />
+              </div>
 
-      {message && <p className='mt-4 text-sm text-white'>{message}</p>}
+              <button
+                type='submit'
+                disabled={loading}
+                className='w-full rounded-full bg-yellow-500 p-3 font-bold text-black hover:bg-yellow-400 disabled:opacity-50'
+              >
+                {loading ? 'Creating account...' : 'Create Account'}
+              </button>
+            </form>
 
-      <p className='mt-6 text-sm text-white'>
-        Already have an account? <Link href='/login' className='underline'>Login</Link>
-      </p>
+            <div className='my-5 flex items-center gap-3'>
+              <div className='h-px flex-1 bg-yellow-900/50' />
+              <span className='text-sm text-gray-400'>or</span>
+              <div className='h-px flex-1 bg-yellow-900/50' />
+            </div>
+
+            <GoogleLoginButton />
+
+            {message && (
+              <p className='mt-4 rounded-xl border border-yellow-900/40 bg-black/30 p-3 text-sm text-yellow-300'>
+                {message}
+              </p>
+            )}
+
+            <div className='mt-6 space-y-3 text-center text-sm'>
+              <p className='text-gray-300'>
+                Already have an account?{' '}
+                <Link href='/login' className='font-bold text-yellow-300 underline'>
+                  Login
+                </Link>
+              </p>
+
+              <p>
+                <Link href='/' className='text-gray-500 underline'>
+                  Back to public site
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }
