@@ -96,6 +96,12 @@ export default async function DashboardPage() {
       href: '/members',
       label: 'Manage community',
     },
+{
+  title: 'Manage Book Access',
+  description: 'Manually approve members to download private book PDFs.',
+  href: '/admin/book-access',
+  label: 'PDF access',
+},
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',

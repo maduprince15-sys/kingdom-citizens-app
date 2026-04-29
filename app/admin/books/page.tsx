@@ -7,7 +7,7 @@ export default async function AdminBooksPage() {
 
   const { data: books, error } = await supabase
     .from('books')
-    .select('*')
+    .select('id, title, subtitle, description, cover_url, purchase_url, status, price, display_order, is_public, pdf_path')
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: false })
 
