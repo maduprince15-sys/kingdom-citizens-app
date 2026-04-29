@@ -48,13 +48,6 @@ export default async function HomePage() {
 
             <div className='mt-8 flex flex-wrap gap-4'>
               <Link
-                href='/public/announcements'
-                className='rounded-full bg-yellow-500 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-yellow-900/30 hover:bg-yellow-400'
-              >
-                View Announcements
-              </Link>
-
-              <Link
                 href='/public/posts'
                 className='rounded-full border border-yellow-700/70 px-6 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-900/20'
               >
@@ -165,13 +158,6 @@ export default async function HomePage() {
                         Open Video
                       </a>
                     )}
-
-                    <Link
-                      href='/public/announcements'
-                      className='mt-4 inline-block rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-400'
-                    >
-                      View All Announcements
-                    </Link>
                   </div>
                 </>
               ) : (
@@ -228,17 +214,11 @@ export default async function HomePage() {
             Enter the Kingdom Citizens platform
           </h2>
           <p className='mt-3 max-w-3xl text-sm leading-7 text-gray-300'>
-            Access announcements, teachings, books, meetings, prayer, giving, and member tools.
+            Access teachings, books, meetings, prayer, giving, and member tools.
           </p>
         </div>
 
         <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-          <Link href='/public/announcements' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Official Notices</p>
-            <h3 className='mt-3 text-2xl font-bold'>Announcements</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>Read ministry notices, updates, and public communication.</p>
-          </Link>
-
           <Link href='/public/posts' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
             <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Teaching</p>
             <h3 className='mt-3 text-2xl font-bold'>Posts</h3>
