@@ -1,5 +1,5 @@
 ﻿'use client'
-
+import GoogleLoginButton from '../components/GoogleLoginButton'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
@@ -65,7 +65,13 @@ export default function LoginPage() {
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+<div className='my-4 flex items-center gap-3'>
+  <div className='h-px flex-1 bg-gray-700' />
+  <span className='text-sm text-gray-400'>or</span>
+  <div className='h-px flex-1 bg-gray-700' />
+</div>
 
+<GoogleLoginButton />
       <div className='mt-4'>
         <Link href='/forgot-password' className='text-sm text-white underline'>
           Forgot password?
