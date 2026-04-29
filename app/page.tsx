@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import PublicHeader from './components/PublicHeader'
 import PublicFooter from './components/PublicFooter'
+import PinnedAnnouncementSlider from './components/PinnedAnnouncementSlider'
 import { createClient } from '../lib/supabase/server'
 
 export default async function HomePage() {
@@ -12,13 +13,12 @@ export default async function HomePage() {
     .order('meeting_date', { ascending: true })
     .limit(3)
 
-  const { data: pinnedAnnouncement } = await supabase
+  const { data: pinnedAnnouncements } = await supabase
     .from('app_announcements')
     .select('id, title, content, image_url, video_url, created_at')
     .eq('is_pinned', true)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(5)
 
   return (
     <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
@@ -114,52 +114,18 @@ export default async function HomePage() {
                   </p>
 
                   <h2 className='mt-1 text-2xl font-bold'>
-                    {pinnedAnnouncement ? 'Pinned Notice' : 'Today'}
+                    {pinnedAnnouncements && pinnedAnnouncements.length > 0
+                      ? 'Pinned Notice'
+                      : 'Today'}
                   </h2>
                 </div>
               </div>
 
-              {pinnedAnnouncement ? (
-                <>
-                  {pinnedAnnouncement.image_url && (
-                    <img
-                      src={pinnedAnnouncement.image_url}
-                      alt={pinnedAnnouncement.title}
-                      className='mt-6 max-h-72 w-full rounded-2xl object-cover'
-                    />
-                  )}
-
-                  <div className='mt-6 rounded-2xl bg-[#7c2630] p-5'>
-                    <p className='text-xs uppercase tracking-[0.25em] text-yellow-200'>
-                      Announcement
-                    </p>
-
-                    <h3 className='mt-3 text-2xl font-black'>
-                      {pinnedAnnouncement.title}
-                    </h3>
-                  </div>
-
-                  <div className='mt-5 rounded-2xl border border-yellow-900/40 bg-black/40 p-4'>
-                    <p className='text-xs uppercase tracking-[0.25em] text-yellow-400'>
-                      Pinned Message
-                    </p>
-
-                    <p className='mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-300'>
-                      {pinnedAnnouncement.content}
-                    </p>
-
-                    {pinnedAnnouncement.video_url && (
-                      <a
-                        href={pinnedAnnouncement.video_url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='mt-4 inline-block rounded-full border border-yellow-700 px-4 py-2 text-sm font-bold text-yellow-300 hover:bg-yellow-900/20'
-                      >
-                        Open Video
-                      </a>
-                    )}
-                  </div>
-                </>
+              {pinnedAnnouncements && pinnedAnnouncements.length > 0 ? (
+                <PinnedAnnouncementSlider
+                  announcements={pinnedAnnouncements}
+                  intervalMs={15000}
+                />
               ) : (
                 <>
                   <div className='mt-6 rounded-2xl bg-[#7c2630] p-5'>
