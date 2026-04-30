@@ -39,6 +39,12 @@ export default async function DashboardPage() {
       href: '/profile',
       label: 'Member profile',
     },
+{
+  title: 'My Citizen Records',
+  description: 'View your attendance, contribution, task, service, and training records.',
+  href: '/my-records',
+  label: 'My records',
+},
     {
       title: `Messages${unreadCount ? ` (${unreadCount} unread)` : ''}`,
       description: 'Read inbox messages and send messages to board members.',
@@ -141,6 +147,12 @@ export default async function DashboardPage() {
       href: '/admin/giving',
       label: 'Giving portal',
     },
+{
+  title: 'Manage Citizen Records',
+  description: 'Add and manage member contribution, attendance, task, service, and training records.',
+  href: '/admin/member-records',
+  label: 'Records',
+},
     {
       title: 'Manage Connect',
       description: 'Add, edit, hide, or remove official ministry links.',
@@ -168,6 +180,12 @@ export default async function DashboardPage() {
       href: '/admin/giving',
       label: 'Finance office',
     },
+{
+  title: 'Contribution Records',
+  description: 'Add and manage financial contribution records for members.',
+  href: '/admin/member-records',
+  label: 'Finance records',
+},
   ]
 
   const moderatorCards = [
@@ -195,7 +213,12 @@ export default async function DashboardPage() {
       href: '/admin/meetings',
       label: 'Meeting manager',
     },
-    {
+{
+  title: 'Manage Attendance and Tasks',
+  description: 'Add and manage attendance, task, service, and training records.',
+  href: '/admin/member-records',
+  label: 'Records',
+},    {
       title: 'Manage Calendar',
       description: 'Add, edit, or remove important dates and event reminders.',
       href: '/admin/calendar',
@@ -204,6 +227,12 @@ export default async function DashboardPage() {
   ]
 
   const teacherCards = [
+{
+  title: 'Training and Teaching Records',
+  description: 'Add and manage training, service, and teaching task records.',
+  href: '/admin/member-records',
+  label: 'Teaching records',
+},
     {
       title: 'Manage Announcements',
       description: 'Create and manage teaching or ministry announcements.',
