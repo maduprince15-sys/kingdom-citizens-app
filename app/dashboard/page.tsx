@@ -45,6 +45,12 @@ export default async function DashboardPage() {
   href: '/my-records',
   label: 'My records',
 },
+{
+  title: 'My Groups',
+  description: 'View your Bible study, training, prayer, and service groups.',
+  href: '/groups',
+  label: 'Groups',
+},
     {
       title: `Messages${unreadCount ? ` (${unreadCount} unread)` : ''}`,
       description: 'Read inbox messages and send messages to board members.',
@@ -111,6 +117,12 @@ export default async function DashboardPage() {
       href: '/members',
       label: 'Manage community',
     },
+{
+  title: 'Manage Groups',
+  description: 'Create and manage Bible study groups, training groups, prayer teams, and service groups.',
+  href: '/admin/groups',
+  label: 'Groups',
+},
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',
@@ -189,6 +201,18 @@ export default async function DashboardPage() {
   ]
 
   const moderatorCards = [
+{
+  title: 'Manage Groups',
+  description: 'Create and manage community, prayer, service, and training groups.',
+  href: '/admin/groups',
+  label: 'Groups',
+},
+{
+  title: 'Manage Attendance and Tasks',
+  description: 'Add and manage attendance, task, service, and training records.',
+  href: '/admin/member-records',
+  label: 'Records',
+},   
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',
@@ -213,12 +237,7 @@ export default async function DashboardPage() {
       href: '/admin/meetings',
       label: 'Meeting manager',
     },
-{
-  title: 'Manage Attendance and Tasks',
-  description: 'Add and manage attendance, task, service, and training records.',
-  href: '/admin/member-records',
-  label: 'Records',
-},    {
+ {
       title: 'Manage Calendar',
       description: 'Add, edit, or remove important dates and event reminders.',
       href: '/admin/calendar',
@@ -233,7 +252,13 @@ export default async function DashboardPage() {
   href: '/admin/member-records',
   label: 'Teaching records',
 },
-    {
+{
+  title: 'Manage Study Groups',
+  description: 'Create and manage Bible study, teaching, and training groups.',
+  href: '/admin/groups',
+  label: 'Study groups',
+},
+   {
       title: 'Manage Announcements',
       description: 'Create and manage teaching or ministry announcements.',
       href: '/announcements',
