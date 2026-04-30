@@ -59,6 +59,26 @@ export default async function StudyCenterPage() {
       </section>
 
       <section className='mx-auto max-w-6xl px-4 py-8 md:px-8'>
+<div className='mb-8 rounded-[2rem] border border-yellow-700/50 bg-gradient-to-br from-[#2a0909] via-[#120707] to-black p-6 shadow-2xl shadow-black/40 md:p-8'>
+  <p className='text-xs uppercase tracking-[0.35em] text-yellow-400'>
+    Scripture
+  </p>
+
+  <h2 className='mt-3 text-3xl font-black text-white md:text-5xl'>
+    Bible Reader
+  </h2>
+
+  <p className='mt-4 max-w-3xl text-sm leading-7 text-gray-300 md:text-base'>
+    Search and read Scripture directly inside the Study Center.
+  </p>
+
+  <Link
+    href='/study/bible'
+    className='mt-6 inline-block rounded-full bg-yellow-500 px-6 py-3 text-sm font-black text-black hover:bg-yellow-400'
+  >
+    Open Bible Reader →
+  </Link>
+</div>
         {resourcesError && (
           <div className='mb-6 rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
             Error loading study resources: {resourcesError.message}

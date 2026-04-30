@@ -173,6 +173,12 @@ export default async function DashboardPage() {
   href: '/study',
   label: 'Study',
 },
+{
+  title: 'Study Center',
+  description: 'Study Bible lessons, doctrine resources, Scripture notes, teaching materials, and read the Bible.',
+  href: '/study',
+  label: 'Study',
+},
     {
       title: 'Connect',
       description: 'Access official ministry links and channels.',
