@@ -23,7 +23,7 @@ export default async function ProfilePage() {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, email, phone, role')
+    .select('full_name, email, phone, role, birthday_month, birthday_day, show_birthday')
     .eq('id', user.id)
     .single()
 
@@ -39,7 +39,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <main className='min-h-screen bg-[#050303] text-white'>
+    <main className='min-h-screen bg-[#050303] pb-28 text-white md:pb-10'>
       <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-8 md:px-8'>
         <div className='mx-auto max-w-4xl'>
           <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
@@ -51,7 +51,7 @@ export default async function ProfilePage() {
           </h1>
 
           <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base'>
-            Update your member information, phone number, and account email.
+            Update your member information, optional phone number, birthday celebration details, and account email.
             Email changes require confirmation through your new email address.
           </p>
         </div>
@@ -62,6 +62,9 @@ export default async function ProfilePage() {
           <ProfileForm
             initialFullName={profile?.full_name || ''}
             initialPhone={profile?.phone || ''}
+            initialBirthdayMonth={profile?.birthday_month ?? null}
+            initialBirthdayDay={profile?.birthday_day ?? null}
+            initialShowBirthday={profile?.show_birthday ?? true}
             email={user.email || profile?.email || ''}
             role={profile?.role || 'member'}
           />
