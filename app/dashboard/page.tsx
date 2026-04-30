@@ -2,7 +2,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import LogoutButton from './LogoutButton'
-import DeleteAccountButton from './DeleteAccountButton'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -433,9 +432,15 @@ export default async function DashboardPage() {
           </p>
 
           <div className='mt-5 flex flex-col gap-3 sm:flex-row sm:items-center'>
-            <LogoutButton />
-            <DeleteAccountButton />
-          </div>
+  <LogoutButton />
+
+  <Link
+    href='/account/delete'
+    className='rounded-full border border-red-700 px-5 py-3 text-center text-sm font-bold text-red-300 hover:bg-red-900/20'
+  >
+    Delete Account
+  </Link>
+</div>
         </div>
       </section>
     </main>
