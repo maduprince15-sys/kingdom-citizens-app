@@ -1,6 +1,8 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
+import PublicHeader from '../../components/PublicHeader'
+import PublicFooter from '../../components/PublicFooter'
 
 type Props = {
   params: Promise<{
@@ -11,15 +13,6 @@ type Props = {
 export default async function StudyResourcePage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    redirect('/login')
-  }
 
   const { data: resource, error: resourceError } = await supabase
     .from('study_resources')
@@ -33,8 +26,10 @@ export default async function StudyResourcePage({ params }: Props) {
   }
 
   return (
-    <main className='min-h-screen bg-[#050303] pb-28 text-white md:pb-10'>
-      <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-8 md:px-8'>
+    <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
+      <PublicHeader />
+
+      <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-10 md:px-8 md:py-16'>
         <div className='mx-auto max-w-4xl'>
           <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
             Study Center
@@ -62,7 +57,14 @@ export default async function StudyResourcePage({ params }: Props) {
               href='/dashboard'
               className='rounded-full border border-yellow-700 px-4 py-2 text-sm text-yellow-300 hover:bg-yellow-900/20'
             >
-              Dashboard
+              Member Dashboard
+            </Link>
+
+            <Link
+              href='/login'
+              className='rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-400'
+            >
+              Login
             </Link>
           </div>
         </div>
@@ -155,6 +157,8 @@ export default async function StudyResourcePage({ params }: Props) {
           )}
         </div>
       </section>
+
+      <PublicFooter />
     </main>
   )
 }

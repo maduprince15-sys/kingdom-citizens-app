@@ -46,6 +46,9 @@ export default function PublicHeader() {
               <Link href='/public/announcements' className='rounded-lg p-3 hover:bg-yellow-900/20'>
                 Announcements
               </Link>
+<Link href='/study' className='rounded-lg p-3 hover:bg-yellow-900/20'>
+  Study Center
+</Link>
 
               <Link href='/public/posts' className='rounded-lg p-3 hover:bg-yellow-900/20'>
                 Posts

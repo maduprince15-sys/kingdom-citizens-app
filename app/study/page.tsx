@@ -1,18 +1,10 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
+import PublicHeader from '../components/PublicHeader'
+import PublicFooter from '../components/PublicFooter'
 
 export default async function StudyCenterPage() {
   const supabase = await createClient()
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    redirect('/login')
-  }
 
   const { data: resources, error: resourcesError } = await supabase
     .from('study_resources')
@@ -22,8 +14,10 @@ export default async function StudyCenterPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <main className='min-h-screen bg-[#050303] pb-28 text-white md:pb-10'>
-      <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-8 md:px-8'>
+    <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
+      <PublicHeader />
+
+      <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-10 md:px-8 md:py-16'>
         <div className='mx-auto max-w-6xl'>
           <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
             The Kingdom Citizens
@@ -31,22 +25,35 @@ export default async function StudyCenterPage() {
 
           <div className='mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
             <div>
-              <h1 className='text-3xl font-bold md:text-5xl'>
+              <h1 className='text-4xl font-black md:text-6xl'>
                 Study Center
               </h1>
 
-              <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300'>
+              <p className='mt-4 max-w-3xl text-sm leading-7 text-gray-300 md:text-base'>
                 Study Kingdom Citizens doctrine, Bible lessons, teaching resources,
                 Scripture-based notes, and formation materials.
               </p>
+
+              <p className='mt-3 max-w-3xl text-sm leading-7 text-yellow-300'>
+                Public visitors can read published resources. Signed-in members will later be able to save progress, continue studies, and keep study records.
+              </p>
             </div>
 
-            <Link
-              href='/dashboard'
-              className='rounded-full border border-yellow-700/70 px-4 py-2 text-sm text-yellow-300 hover:bg-yellow-700/20'
-            >
-              Dashboard
-            </Link>
+            <div className='flex flex-wrap gap-3'>
+              <Link
+                href='/dashboard'
+                className='rounded-full border border-yellow-700/70 px-4 py-2 text-sm text-yellow-300 hover:bg-yellow-700/20'
+              >
+                Member Dashboard
+              </Link>
+
+              <Link
+                href='/login'
+                className='rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-400'
+              >
+                Login
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -108,6 +115,8 @@ export default async function StudyCenterPage() {
           )}
         </div>
       </section>
+
+      <PublicFooter />
     </main>
   )
 }
