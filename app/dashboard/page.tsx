@@ -38,18 +38,18 @@ export default async function DashboardPage() {
       href: '/profile',
       label: 'Member profile',
     },
-{
-  title: 'My Citizen Records',
-  description: 'View your attendance, contribution, task, service, and training records.',
-  href: '/my-records',
-  label: 'My records',
-},
-{
-  title: 'My Groups',
-  description: 'View your Bible study, training, prayer, and service groups.',
-  href: '/groups',
-  label: 'Groups',
-},
+    {
+      title: 'My Citizen Records',
+      description: 'View your attendance, contribution, task, service, and training records.',
+      href: '/my-records',
+      label: 'My records',
+    },
+    {
+      title: 'My Groups',
+      description: 'View your Bible study, training, prayer, and service groups.',
+      href: '/groups',
+      label: 'Groups',
+    },
     {
       title: `Messages${unreadCount ? ` (${unreadCount} unread)` : ''}`,
       description: 'Read inbox messages and send messages to board members.',
@@ -116,12 +116,12 @@ export default async function DashboardPage() {
       href: '/members',
       label: 'Manage community',
     },
-{
-  title: 'Manage Groups',
-  description: 'Create and manage Bible study groups, training groups, prayer teams, and service groups.',
-  href: '/admin/groups',
-  label: 'Groups',
-},
+    {
+      title: 'Manage Groups',
+      description: 'Create and manage Bible study groups, training groups, prayer teams, and service groups.',
+      href: '/admin/groups',
+      label: 'Groups',
+    },
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',
@@ -158,12 +158,12 @@ export default async function DashboardPage() {
       href: '/admin/giving',
       label: 'Giving portal',
     },
-{
-  title: 'Manage Citizen Records',
-  description: 'Add and manage member contribution, attendance, task, service, and training records.',
-  href: '/admin/member-records',
-  label: 'Records',
-},
+    {
+      title: 'Manage Citizen Records',
+      description: 'Add and manage member contribution, attendance, task, service, and training records.',
+      href: '/admin/member-records',
+      label: 'Records',
+    },
     {
       title: 'Manage Connect',
       description: 'Add, edit, hide, or remove official ministry links.',
@@ -191,27 +191,27 @@ export default async function DashboardPage() {
       href: '/admin/giving',
       label: 'Finance office',
     },
-{
-  title: 'Contribution Records',
-  description: 'Add and manage financial contribution records for members.',
-  href: '/admin/member-records',
-  label: 'Finance records',
-},
+    {
+      title: 'Contribution Records',
+      description: 'Add and manage financial contribution records for members.',
+      href: '/admin/member-records',
+      label: 'Finance records',
+    },
   ]
 
   const moderatorCards = [
-{
-  title: 'Manage Groups',
-  description: 'Create and manage community, prayer, service, and training groups.',
-  href: '/admin/groups',
-  label: 'Groups',
-},
-{
-  title: 'Manage Attendance and Tasks',
-  description: 'Add and manage attendance, task, service, and training records.',
-  href: '/admin/member-records',
-  label: 'Records',
-},   
+    {
+      title: 'Manage Groups',
+      description: 'Create and manage community, prayer, service, and training groups.',
+      href: '/admin/groups',
+      label: 'Groups',
+    },
+    {
+      title: 'Manage Attendance and Tasks',
+      description: 'Add and manage attendance, task, service, and training records.',
+      href: '/admin/member-records',
+      label: 'Records',
+    },
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',
@@ -236,7 +236,7 @@ export default async function DashboardPage() {
       href: '/admin/meetings',
       label: 'Meeting manager',
     },
- {
+    {
       title: 'Manage Calendar',
       description: 'Add, edit, or remove important dates and event reminders.',
       href: '/admin/calendar',
@@ -245,19 +245,19 @@ export default async function DashboardPage() {
   ]
 
   const teacherCards = [
-{
-  title: 'Training and Teaching Records',
-  description: 'Add and manage training, service, and teaching task records.',
-  href: '/admin/member-records',
-  label: 'Teaching records',
-},
-{
-  title: 'Manage Study Groups',
-  description: 'Create and manage Bible study, teaching, and training groups.',
-  href: '/admin/groups',
-  label: 'Study groups',
-},
-   {
+    {
+      title: 'Training and Teaching Records',
+      description: 'Add and manage training, service, and teaching task records.',
+      href: '/admin/member-records',
+      label: 'Teaching records',
+    },
+    {
+      title: 'Manage Study Groups',
+      description: 'Create and manage Bible study, teaching, and training groups.',
+      href: '/admin/groups',
+      label: 'Study groups',
+    },
+    {
       title: 'Manage Announcements',
       description: 'Create and manage teaching or ministry announcements.',
       href: '/announcements',
@@ -344,6 +344,32 @@ export default async function DashboardPage() {
       </section>
 
       <section className='mx-auto max-w-6xl px-4 py-8 md:px-8'>
+        <Link
+          href='/display/notice-board'
+          className='group mb-8 block overflow-hidden rounded-[2rem] border border-yellow-700/50 bg-gradient-to-br from-[#2a0909] via-[#120707] to-black p-6 shadow-2xl shadow-black/40 transition hover:-translate-y-1 hover:border-yellow-400 md:p-8'
+        >
+          <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
+            <div>
+              <p className='text-xs uppercase tracking-[0.35em] text-yellow-400'>
+                Kingdom Citizens Notice Board
+              </p>
+
+              <h2 className='mt-3 text-3xl font-black text-white md:text-5xl'>
+                Live Community Notice Screen
+              </h2>
+
+              <p className='mt-4 max-w-3xl text-sm leading-7 text-gray-300 md:text-base'>
+                View birthdays, pinned announcements, pinned posts, pinned events, projects,
+                meetings, and important Citizens updates in a bold rotating display.
+              </p>
+            </div>
+
+            <div className='rounded-full bg-yellow-500 px-6 py-3 text-center text-sm font-black text-black shadow-lg shadow-yellow-900/30 group-hover:bg-yellow-400'>
+              Open Notice Board →
+            </div>
+          </div>
+        </Link>
+
         <div className='mb-6 rounded-2xl border border-yellow-900/40 bg-[#120707] p-5 md:p-6'>
           <h2 className='text-xl font-bold text-yellow-300'>
             Member Tools
@@ -432,15 +458,15 @@ export default async function DashboardPage() {
           </p>
 
           <div className='mt-5 flex flex-col gap-3 sm:flex-row sm:items-center'>
-  <LogoutButton />
+            <LogoutButton />
 
-  <Link
-    href='/account/delete'
-    className='rounded-full border border-red-700 px-5 py-3 text-center text-sm font-bold text-red-300 hover:bg-red-900/20'
-  >
-    Delete Account
-  </Link>
-</div>
+            <Link
+              href='/account/delete'
+              className='rounded-full border border-red-700 px-5 py-3 text-center text-sm font-bold text-red-300 hover:bg-red-900/20'
+            >
+              Delete Account
+            </Link>
+          </div>
         </div>
       </section>
     </main>
