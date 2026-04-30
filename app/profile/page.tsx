@@ -23,7 +23,7 @@ export default async function ProfilePage() {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, email, phone, role, birthday_month, birthday_day, show_birthday')
+    .select('full_name, email, phone, role, birthday_month, birthday_day, show_birthday, avatar_url')
     .eq('id', user.id)
     .single()
 
@@ -51,7 +51,7 @@ export default async function ProfilePage() {
           </h1>
 
           <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base'>
-            Update your member information, optional phone number, birthday celebration details, and account email.
+            Update your member information, profile photo, optional phone number, birthday celebration details, and account email.
             Email changes require confirmation through your new email address.
           </p>
         </div>
@@ -65,6 +65,7 @@ export default async function ProfilePage() {
             initialBirthdayMonth={profile?.birthday_month ?? null}
             initialBirthdayDay={profile?.birthday_day ?? null}
             initialShowBirthday={profile?.show_birthday ?? true}
+            initialAvatarUrl={profile?.avatar_url || ''}
             email={user.email || profile?.email || ''}
             role={profile?.role || 'member'}
           />

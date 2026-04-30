@@ -10,6 +10,7 @@ type Props = {
   initialBirthdayMonth: number | null
   initialBirthdayDay: number | null
   initialShowBirthday: boolean
+  initialAvatarUrl: string
   email: string
   role: string
 }
@@ -55,6 +56,7 @@ export default function ProfileForm({
   initialBirthdayMonth,
   initialBirthdayDay,
   initialShowBirthday,
+  initialAvatarUrl,
   email,
   role,
 }: Props) {
@@ -63,6 +65,9 @@ export default function ProfileForm({
 
   const [fullName, setFullName] = useState(initialFullName)
   const [phone, setPhone] = useState(initialPhone)
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+
   const [birthdayMonth, setBirthdayMonth] = useState(
     initialBirthdayMonth ? String(initialBirthdayMonth) : ''
   )
@@ -70,56 +75,101 @@ export default function ProfileForm({
     initialBirthdayDay ? String(initialBirthdayDay) : ''
   )
   const [showBirthday, setShowBirthday] = useState(initialShowBirthday)
+
   const [newEmail, setNewEmail] = useState('')
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [message, setMessage] = useState('')
+
+  async function uploadAvatarIfNeeded(userId: string) {
+    if (!avatarFile) return avatarUrl || null
+
+    if (!avatarFile.type.startsWith('image/')) {
+      throw new Error('Please upload an image file.')
+    }
+
+    const maxSize = 5 * 1024 * 1024
+
+    if (avatarFile.size > maxSize) {
+      throw new Error('Profile photo is too large. Maximum size is 5MB.')
+    }
+
+    const fileExt = avatarFile.name.split('.').pop() || 'png'
+    const filePath = `${userId}/profile-${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('profile-photos')
+      .upload(filePath, avatarFile, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      throw new Error(uploadError.message)
+    }
+
+    const { data } = supabase.storage
+      .from('profile-photos')
+      .getPublicUrl(filePath)
+
+    return data.publicUrl
+  }
 
   async function handleProfileSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoadingProfile(true)
     setMessage('')
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
 
-    if (userError || !user) {
-      setMessage('You must be logged in to update your profile.')
+      if (userError || !user) {
+        setMessage('You must be logged in to update your profile.')
+        setLoadingProfile(false)
+        return
+      }
+
+      const monthNumber = birthdayMonth ? Number(birthdayMonth) : null
+      const dayNumber = birthdayDay ? Number(birthdayDay) : null
+
+      if ((monthNumber && !dayNumber) || (!monthNumber && dayNumber)) {
+        setMessage('Please select both birthday month and birthday day, or leave both empty.')
+        setLoadingProfile(false)
+        return
+      }
+
+      const finalAvatarUrl = await uploadAvatarIfNeeded(user.id)
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone: phone || null,
+          avatar_url: finalAvatarUrl,
+          birthday_month: monthNumber,
+          birthday_day: dayNumber,
+          show_birthday: showBirthday,
+        })
+        .eq('id', user.id)
+
+      if (error) {
+        setMessage(error.message)
+        setLoadingProfile(false)
+        return
+      }
+
+      setAvatarUrl(finalAvatarUrl || '')
+      setAvatarFile(null)
+      setMessage('Profile updated successfully.')
       setLoadingProfile(false)
-      return
-    }
-
-    const monthNumber = birthdayMonth ? Number(birthdayMonth) : null
-    const dayNumber = birthdayDay ? Number(birthdayDay) : null
-
-    if ((monthNumber && !dayNumber) || (!monthNumber && dayNumber)) {
-      setMessage('Please select both birthday month and birthday day, or leave both empty.')
+      router.refresh()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Profile update failed.')
       setLoadingProfile(false)
-      return
     }
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: fullName,
-        phone: phone || null,
-        birthday_month: monthNumber,
-        birthday_day: dayNumber,
-        show_birthday: showBirthday,
-      })
-      .eq('id', user.id)
-
-    if (error) {
-      setMessage(error.message)
-      setLoadingProfile(false)
-      return
-    }
-
-    setMessage('Profile updated successfully.')
-    setLoadingProfile(false)
-    router.refresh()
   }
 
   async function handleEmailSubmit(e: FormEvent<HTMLFormElement>) {
@@ -175,8 +225,61 @@ export default function ProfileForm({
           <h2 className='mt-2 text-2xl font-bold'>Your Information</h2>
 
           <p className='mt-2 text-sm text-gray-400'>
-            Keep your name, optional phone number, and birthday celebration details current for The Kingdom Citizens member records.
+            Keep your name, profile photo, optional phone number, and birthday celebration details current for The Kingdom Citizens member records.
           </p>
+        </div>
+
+        <div className='rounded-2xl border border-yellow-900/40 bg-black/30 p-4'>
+          <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+            Profile Photo
+          </p>
+
+          <h3 className='mt-2 text-xl font-bold'>
+            Your Photo
+          </h3>
+
+          <p className='mt-2 text-sm leading-6 text-gray-400'>
+            Upload a profile photo. This can be used for birthday celebrations, group records, and member identity inside the app.
+          </p>
+
+          <div className='mt-5 flex flex-col gap-5 md:flex-row md:items-center'>
+            <div className='flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-yellow-900/40 bg-[#120707]'>
+              {avatarFile ? (
+                <p className='px-3 text-center text-xs text-yellow-300'>
+                  New photo selected
+                </p>
+              ) : avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={fullName || 'Profile photo'}
+                  className='h-full w-full object-cover'
+                />
+              ) : (
+                <span className='text-4xl font-bold text-yellow-500'>
+                  {(fullName || email || 'C').charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+
+            <div className='flex-1'>
+              <input
+                type='file'
+                accept='image/*'
+                onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                className='w-full rounded border border-gray-300 bg-white p-3 text-black'
+              />
+
+              <p className='mt-2 text-xs text-gray-500'>
+                Maximum file size: 5MB. Image files only.
+              </p>
+
+              {avatarFile && (
+                <p className='mt-2 text-sm text-yellow-300'>
+                  Selected: {avatarFile.name}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
