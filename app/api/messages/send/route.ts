@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
+import { createAdminClient } from '../../../../lib/supabase/admin'
 
 const BOARD_ROLES = ['owner', 'admin', 'moderator', 'teacher']
 
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
 
   const senderIsOwnerOrAdmin = ['owner', 'admin'].includes(senderRole)
 
+  const admin = createAdminClient()
+
   if (recipientId === 'all') {
     if (!senderIsOwnerOrAdmin) {
       return NextResponse.json(
@@ -87,6 +90,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 400 })
     }
 
+    const notificationRows =
+      recipients?.map((recipient) => ({
+        user_id: recipient.id,
+        title: 'New Broadcast Message',
+        message: `You received a broadcast message from ${senderName}: ${subject}`,
+        notification_type: 'message',
+        link_url: '/messages',
+        created_by: user.id,
+      })) || []
+
+    if (notificationRows.length > 0) {
+      await admin.from('notifications').insert(notificationRows)
+    }
+
     return NextResponse.json({ success: true })
   }
 
@@ -121,6 +138,15 @@ export async function POST(request: Request) {
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 400 })
   }
+
+  await admin.from('notifications').insert({
+    user_id: recipientId,
+    title: 'New Message',
+    message: `You received a new message from ${senderName}: ${subject}`,
+    notification_type: 'message',
+    link_url: '/messages',
+    created_by: user.id,
+  })
 
   return NextResponse.json({ success: true })
 }
