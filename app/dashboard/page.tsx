@@ -55,12 +55,18 @@ export default async function DashboardPage() {
   const displayName = profile?.full_name || user.email
   const role = profile?.role || 'member'
 
-  const { count: unreadCount } = await supabase
+  const { count: unreadMessageCount } = await supabase
     .from('app_messages')
     .select('id', { count: 'exact', head: true })
     .eq('recipient_id', user.id)
     .is('read_at', null)
     .is('recipient_archived_at', null)
+
+  const { count: unreadNotificationCount } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('is_read', false)
 
   const today = new Date()
   const currentMonth = today.getMonth() + 1
@@ -144,6 +150,12 @@ export default async function DashboardPage() {
       label: 'Member profile',
     },
     {
+      title: `Notifications${unreadNotificationCount ? ` (${unreadNotificationCount} unread)` : ''}`,
+      description: 'View app notifications, reminders, approvals, and important Citizens updates.',
+      href: '/notifications',
+      label: 'Alerts',
+    },
+    {
       title: 'My Citizen Records',
       description: 'View your attendance, contribution, task, service, and training records.',
       href: '/my-records',
@@ -156,7 +168,7 @@ export default async function DashboardPage() {
       label: 'Groups',
     },
     {
-      title: `Messages${unreadCount ? ` (${unreadCount} unread)` : ''}`,
+      title: `Messages${unreadMessageCount ? ` (${unreadMessageCount} unread)` : ''}`,
       description: 'Read inbox messages and send messages to board members.',
       href: '/messages',
       label: 'Inbox',
@@ -167,24 +179,18 @@ export default async function DashboardPage() {
       href: '/books',
       label: 'Bookstore',
     },
-{
-  title: 'Study Center',
-  description: 'Study Bible lessons, doctrine resources, Scripture notes, and teaching materials.',
-  href: '/study',
-  label: 'Study',
-},
-{
-  title: 'Study Center',
-  description: 'Study Bible lessons, doctrine resources, Scripture notes, teaching materials, and read the Bible.',
-  href: '/study',
-  label: 'Study',
-},
-{
-  title: 'My Study Progress',
-  description: 'Continue saved studies, review bookmarks, completed lessons, and private study notes.',
-  href: '/study/progress',
-  label: 'Study progress',
-},
+    {
+      title: 'Study Center',
+      description: 'Study Bible lessons, doctrine resources, Scripture notes, teaching materials, and read the Bible.',
+      href: '/study',
+      label: 'Study',
+    },
+    {
+      title: 'My Study Progress',
+      description: 'Continue saved studies, review bookmarks, completed lessons, and private study notes.',
+      href: '/study/progress',
+      label: 'Study progress',
+    },
     {
       title: 'Connect',
       description: 'Access official ministry links and channels.',
@@ -245,19 +251,18 @@ export default async function DashboardPage() {
       href: '/admin/groups',
       label: 'Groups',
     },
-   {
+    {
       title: 'Manage Citizen Records',
       description: 'Add and manage member contribution, attendance, task, service, and training records.',
       href: '/admin/member-records',
       label: 'Records',
     },
-
-{
-  title: 'Contact Messages',
-  description: 'Read and manage messages sent from the public contact box.',
-  href: '/admin/contact-messages',
-  label: 'Public messages',
-},
+    {
+      title: 'Contact Messages',
+      description: 'Read and manage messages sent from the public contact box.',
+      href: '/admin/contact-messages',
+      label: 'Public messages',
+    },
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',
@@ -270,12 +275,12 @@ export default async function DashboardPage() {
       href: '/display/announcements',
       label: 'Pinned display',
     },
-{
-  title: 'Manage Study Center',
-  description: 'Create and manage Bible study resources, doctrine lessons, and teaching materials.',
-  href: '/admin/study',
-  label: 'Study resources',
-},
+    {
+      title: 'Manage Study Center',
+      description: 'Create and manage Bible study resources, doctrine lessons, and teaching materials.',
+      href: '/admin/study',
+      label: 'Study resources',
+    },
     {
       title: 'Manage Posts',
       description: 'Create, edit, and remove teaching or community posts.',
@@ -348,12 +353,12 @@ export default async function DashboardPage() {
       href: '/admin/member-records',
       label: 'Records',
     },
-{
-  title: 'Contact Messages',
-  description: 'Read and manage messages sent from the public contact box.',
-  href: '/admin/contact-messages',
-  label: 'Public messages',
-},
+    {
+      title: 'Contact Messages',
+      description: 'Read and manage messages sent from the public contact box.',
+      href: '/admin/contact-messages',
+      label: 'Public messages',
+    },
     {
       title: 'Manage Announcements',
       description: 'Create, edit, pin, unpin, and delete official announcements.',
@@ -399,12 +404,12 @@ export default async function DashboardPage() {
       href: '/admin/groups',
       label: 'Study groups',
     },
-{
-  title: 'Manage Study Center',
-  description: 'Create and manage Bible study resources, doctrine lessons, and teaching materials.',
-  href: '/admin/study',
-  label: 'Study resources',
-},
+    {
+      title: 'Manage Study Center',
+      description: 'Create and manage Bible study resources, doctrine lessons, and teaching materials.',
+      href: '/admin/study',
+      label: 'Study resources',
+    },
     {
       title: 'Manage Announcements',
       description: 'Create and manage teaching or ministry announcements.',
