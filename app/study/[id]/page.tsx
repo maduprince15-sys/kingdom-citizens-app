@@ -4,6 +4,7 @@ import { createClient } from '../../../lib/supabase/server'
 import PublicHeader from '../../components/PublicHeader'
 import PublicFooter from '../../components/PublicFooter'
 import StudyProgressControls from './StudyProgressControls'
+import ChatRoom from '../../chat/ChatRoom'
 
 type Props = {
   params: Promise<{
@@ -32,17 +33,44 @@ export default async function StudyResourcePage({ params }: Props) {
   }
 
   let progress = null
+  let profile = null
+  let discussionMessages: any[] = []
 
   if (user) {
-    const { data } = await supabase
+    const { data: progressData } = await supabase
       .from('study_progress')
       .select('is_bookmarked, is_completed, progress_percent, personal_note')
       .eq('user_id', user.id)
       .eq('resource_id', id)
       .maybeSingle()
 
-    progress = data
+    progress = progressData
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, email, role')
+      .eq('id', user.id)
+      .single()
+
+    profile = profileData
+
+    const { data: messagesData } = await supabase
+      .from('chat_messages')
+      .select('id, sender_id, sender_name, sender_role, body, chat_room, is_deleted, created_at')
+      .eq('chat_room', `study-resource:${resource.id}`)
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    discussionMessages = messagesData || []
   }
+
+  const role = profile?.role || 'member'
+  const canModerate = role === 'admin' || role === 'moderator'
+  const currentUserName =
+    profile?.full_name ||
+    profile?.email ||
+    user?.email ||
+    'Citizen'
 
   return (
     <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
@@ -179,36 +207,78 @@ export default async function StudyResourcePage({ params }: Props) {
         </div>
 
         {user ? (
-          <StudyProgressControls
-            resourceId={resource.id}
-            userId={user.id}
-            initialIsBookmarked={progress?.is_bookmarked ?? false}
-            initialIsCompleted={progress?.is_completed ?? false}
-            initialProgressPercent={progress?.progress_percent ?? 0}
-            initialPersonalNote={progress?.personal_note ?? ''}
-          />
+          <>
+            <StudyProgressControls
+              resourceId={resource.id}
+              userId={user.id}
+              initialIsBookmarked={progress?.is_bookmarked ?? false}
+              initialIsCompleted={progress?.is_completed ?? false}
+              initialProgressPercent={progress?.progress_percent ?? 0}
+              initialPersonalNote={progress?.personal_note ?? ''}
+            />
+
+            <div className='mt-10'>
+              <ChatRoom
+                messages={discussionMessages || []}
+                currentUserId={user.id}
+                currentUserName={currentUserName}
+                currentUserRole={role}
+                canModerate={canModerate}
+                chatRoom={`study-resource:${resource.id}`}
+                label='Study Discussion'
+                title='Discuss This Study'
+                subtitle='Member-only lesson discussion'
+                badgeText='SD'
+                placeholder='Share a reflection or ask a question about this study...'
+              />
+            </div>
+          </>
         ) : (
-          <div className='mt-8 rounded-3xl border border-yellow-900/40 bg-[#120707] p-5 md:p-6'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-              Member Study Progress
-            </p>
+          <>
+            <div className='mt-8 rounded-3xl border border-yellow-900/40 bg-[#120707] p-5 md:p-6'>
+              <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+                Member Study Progress
+              </p>
 
-            <h2 className='mt-2 text-2xl font-bold'>
-              Login to Save Your Progress
-            </h2>
+              <h2 className='mt-2 text-2xl font-bold'>
+                Login to Save Your Progress
+              </h2>
 
-            <p className='mt-2 text-sm leading-6 text-gray-400'>
-              Public visitors can read this study. Signed-in members can bookmark it,
-              mark it completed, save progress percentage, and keep private study notes.
-            </p>
+              <p className='mt-2 text-sm leading-6 text-gray-400'>
+                Public visitors can read this study. Signed-in members can bookmark it,
+                mark it completed, save progress percentage, and keep private study notes.
+              </p>
 
-            <Link
-              href='/login'
-              className='mt-5 inline-block rounded-full bg-yellow-500 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-400'
-            >
-              Login
-            </Link>
-          </div>
+              <Link
+                href='/login'
+                className='mt-5 inline-block rounded-full bg-yellow-500 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-400'
+              >
+                Login
+              </Link>
+            </div>
+
+            <div className='mt-8 rounded-3xl border border-yellow-900/40 bg-[#120707] p-5 md:p-6'>
+              <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
+                Study Discussion
+              </p>
+
+              <h2 className='mt-2 text-2xl font-bold'>
+                Login to Join the Discussion
+              </h2>
+
+              <p className='mt-2 text-sm leading-6 text-gray-400'>
+                Public visitors can read this study, but only signed-in members can discuss,
+                ask questions, and share reflections on this lesson.
+              </p>
+
+              <Link
+                href='/login'
+                className='mt-5 inline-block rounded-full bg-yellow-500 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-400'
+              >
+                Login to Discuss
+              </Link>
+            </div>
+          </>
         )}
       </section>
 
