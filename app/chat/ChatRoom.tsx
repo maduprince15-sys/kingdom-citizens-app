@@ -34,20 +34,71 @@ export default function ChatRoom({
   const supabase = createClient()
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(messages)
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
   const orderedMessages = useMemo(() => {
-    return [...messages].sort(
+    return [...chatMessages].sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     )
-  }, [messages])
+  }, [chatMessages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [orderedMessages.length])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('general-chat-room')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: 'chat_room=eq.general',
+        },
+        (payload) => {
+          const newMessage = payload.new as ChatMessage
+
+          setChatMessages((current) => {
+            const alreadyExists = current.some((item) => item.id === newMessage.id)
+
+            if (alreadyExists) {
+              return current
+            }
+
+            return [...current, newMessage]
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: 'chat_room=eq.general',
+        },
+        (payload) => {
+          const updatedMessage = payload.new as ChatMessage
+
+          setChatMessages((current) =>
+            current.map((item) =>
+              item.id === updatedMessage.id ? updatedMessage : item
+            )
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
 
   async function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -86,7 +137,6 @@ export default function ChatRoom({
     setBody('')
     setMessage('')
     setLoading(false)
-    router.refresh()
   }
 
   async function deleteMessage(id: string) {
