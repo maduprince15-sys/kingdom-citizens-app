@@ -139,26 +139,45 @@ export default function ChatRoom({
     setLoading(false)
   }
 
-  async function deleteMessage(id: string) {
-    const confirmed = window.confirm('Remove this chat message from the group chat?')
-    if (!confirmed) return
+ async function deleteMessage(id: string, mine: boolean) {
+  const confirmed = window.confirm(
+    mine
+      ? 'Delete your message from the group chat?'
+      : 'Remove this chat message from the group chat?'
+  )
 
-    const { error } = await supabase
-      .from('chat_messages')
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-        deleted_by: currentUserId,
-      })
-      .eq('id', id)
+  if (!confirmed) return
 
-    if (error) {
-      alert(error.message)
-      return
-    }
+  const response = await fetch('/api/chat/delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messageId: id,
+    }),
+  })
 
-    router.refresh()
+  const result = await response.json()
+
+  if (!response.ok) {
+    alert(result.error || 'Could not delete message.')
+    return
   }
+
+  setChatMessages((current) =>
+    current.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            is_deleted: true,
+          }
+        : item
+    )
+  )
+
+  router.refresh()
+}
 
   return (
     <div className='mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-yellow-900/40 bg-[#080404] shadow-2xl shadow-black/50'>
@@ -246,18 +265,18 @@ export default function ChatRoom({
                       {new Date(item.created_at).toLocaleString()}
                     </p>
 
-                    {canModerate && !item.is_deleted && (
-                      <button
-                        onClick={() => deleteMessage(item.id)}
-                        className={
-                          mine
-                            ? 'text-[11px] font-bold text-red-900 underline'
-                            : 'text-[11px] font-bold text-red-300 underline'
-                        }
-                      >
-                        Remove
-                      </button>
-                    )}
+                    {(canModerate || mine) && !item.is_deleted && (
+  <button
+    onClick={() => deleteMessage(item.id, mine)}
+    className={
+      mine
+        ? 'text-[11px] font-bold text-red-900 underline'
+        : 'text-[11px] font-bold text-red-300 underline'
+    }
+  >
+    {mine ? 'Delete' : 'Remove'}
+  </button>
+)}
                   </div>
                 </div>
               </div>
