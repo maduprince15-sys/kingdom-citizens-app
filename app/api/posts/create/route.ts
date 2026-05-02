@@ -34,9 +34,22 @@ export async function POST(request: Request) {
   const content = body?.content?.trim()
   const image_url = body?.image_url?.trim() || null
   const video_url = body?.video_url?.trim() || null
+  const expires_at = body?.expires_at || null
 
   if (!title || !content) {
     return NextResponse.json({ error: 'Title and content are required.' }, { status: 400 })
+  }
+
+  let validExpiresAt = null
+
+  if (expires_at) {
+    const parsedDate = new Date(expires_at)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid expiry date.' }, { status: 400 })
+    }
+
+    validExpiresAt = parsedDate.toISOString()
   }
 
   const admin = createAdminClient()
@@ -46,6 +59,8 @@ export async function POST(request: Request) {
     content,
     image_url,
     video_url,
+    expires_at: validExpiresAt,
+    is_archived: false,
     author_id: user.id,
     author_name: profile.full_name || user.email || 'Kingdom Citizens',
   })
