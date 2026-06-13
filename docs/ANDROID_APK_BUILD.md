@@ -40,6 +40,28 @@ The debug APK is created under:
 android/app/build/outputs/apk/debug/
 ```
 
+## Updating The Android App Icon
+
+PWA manifest icons are not enough for the installed Android launcher icon. Use Capacitor's official asset generator so the native Android mipmap resources are regenerated from the Kingdom Citizens logo.
+
+From Windows PowerShell:
+
+```powershell
+cd C:\Users\madup\kingdom-citizens-app
+npm install -D @capacitor/assets
+New-Item -ItemType Directory -Force -Path resources
+# place logo at resources\icon.png
+npx capacitor-assets generate --android
+npm run build
+npx cap sync android
+cd android
+.\gradlew assembleDebug
+```
+
+The current source icon is `resources\icon.png`, generated from `public\kingdom-citizens-logo.png` on a square brand background. The optional splash source is `resources\splash.png`.
+
+Uninstall the previous APK from the phone before installing the rebuilt APK because Android may cache the old launcher icon.
+
 ## Release APK In Android Studio
 
 1. Run `npx cap open android`.
