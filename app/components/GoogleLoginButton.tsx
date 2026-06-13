@@ -1,12 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase/client'
-import {
-  handleAndroidGoogleCallback,
-  startAndroidGoogleOAuth,
-} from '../../lib/android-google-auth'
+import { startAndroidGoogleOAuth } from '../../lib/android-google-auth'
 import { isAndroidNativeApp } from '../../lib/mobile-runtime'
 
 const getURL = () => {
@@ -25,7 +21,6 @@ const getURL = () => {
 
 export default function GoogleLoginButton() {
   const supabase = useMemo(() => createClient(), [])
-  const router = useRouter()
   const [androidNative, setAndroidNative] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -34,63 +29,17 @@ export default function GoogleLoginButton() {
     setAndroidNative(isAndroidNativeApp())
   }, [])
 
-  useEffect(() => {
-    if (!androidNative) return
-
-    let removed = false
-    let listener: { remove: () => Promise<void> } | undefined
-
-    async function setupNativeCallbackListener() {
-      const { App } = await import('@capacitor/app')
-
-      listener = await App.addListener('appUrlOpen', async ({ url }) => {
-        const result = await handleAndroidGoogleCallback(supabase, url)
-
-        if (!result.handled) return
-
-        if (result.error) {
-          setMessage(result.error)
-          return
-        }
-
-        router.replace('/dashboard')
-      })
-
-      const launch = await App.getLaunchUrl()
-
-      if (launch?.url) {
-        const result = await handleAndroidGoogleCallback(supabase, launch.url)
-
-        if (result.handled && !result.error) {
-          router.replace('/dashboard')
-        } else if (result.handled && result.error) {
-          setMessage(result.error)
-        }
-      }
-    }
-
-    setupNativeCallbackListener().catch((error) => {
-      if (!removed) {
-        setMessage(error instanceof Error ? error.message : 'Google sign-in setup failed.')
-      }
-    })
-
-    return () => {
-      removed = true
-      listener?.remove()
-    }
-  }, [androidNative, router, supabase])
-
   async function handleGoogleLogin() {
     setLoading(true)
-    setMessage(null)
+    setMessage(androidNative ? 'Opening Google sign-in...' : null)
 
     if (androidNative) {
       try {
         await startAndroidGoogleOAuth(supabase)
+        setMessage('Waiting for Android return...')
+        setLoading(false)
       } catch (error) {
         setMessage(error instanceof Error ? error.message : 'Google sign-in failed.')
-      } finally {
         setLoading(false)
       }
 

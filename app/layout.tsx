@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import PWARegister from './components/PWARegister'
+import AndroidAuthReturnHandler from './components/AndroidAuthReturnHandler'
 import './globals.css'
 
 const geistSans = Geist({
@@ -49,6 +50,7 @@ export default function RootLayout({
     >
       <body className='min-h-full flex flex-col'>
         <PWARegister />
+        <AndroidAuthReturnHandler />
         {children}
       </body>
     </html>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import LogoutButton from './LogoutButton'
 import DashboardNoticePreview from '../components/DashboardNoticePreview'
+import PushNotificationManager from '../components/PushNotificationManager'
 
 const months = [
   'January',
@@ -492,6 +493,8 @@ export default async function DashboardPage() {
       </section>
 
       <section className='mx-auto max-w-6xl px-4 py-8 md:px-8'>
+        <PushNotificationManager />
+
         <DashboardNoticePreview slides={noticeSlides} intervalMs={12000} />
 
         {unreadNotificationCount ? (

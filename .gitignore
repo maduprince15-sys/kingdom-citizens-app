@@ -23,6 +23,9 @@
 # capacitor native projects are generated locally for APK builds
 /android/
 
+# Firebase Android config for push notifications can identify the project.
+android/app/google-services.json
+
 # misc
 .DS_Store
 *.pem
