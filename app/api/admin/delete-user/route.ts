@@ -38,6 +38,23 @@ export async function POST(request: Request) {
     )
   }
 
+  const { data: targetProfile, error: targetError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', targetUserId)
+    .single()
+
+  if (targetError || !targetProfile) {
+    return NextResponse.json({ error: 'Target user not found.' }, { status: 404 })
+  }
+
+  if (targetProfile.role === 'owner' || targetProfile.role === 'admin') {
+    return NextResponse.json(
+      { error: 'Owner and admin accounts are protected from this delete action.' },
+      { status: 403 }
+    )
+  }
+
   try {
     const admin = createAdminClient()
 

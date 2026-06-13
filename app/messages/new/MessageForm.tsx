@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
+import { encryptPrivateMessageBody } from '@/lib/e2ee/messages'
 
 type Profile = {
   id: string
@@ -40,13 +41,22 @@ export default function MessageForm({
     setLoading(true)
     setMessage('')
 
+    const cleanBody = body.trim()
+    if (!cleanBody) {
+      setMessage('Message is required.')
+      setLoading(false)
+      return
+    }
+
+    const encryptedBody = await encryptPrivateMessageBody(cleanBody)
+
     const response = await fetch('/api/messages/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recipientId,
         subject,
-        body,
+        encryptedBody,
         parentMessageId: parentMessageId || null,
       }),
     })
@@ -64,6 +74,7 @@ export default function MessageForm({
         ? 'Broadcast sent successfully.'
         : 'Message sent successfully.'
     )
+    setBody('')
 
     setLoading(false)
 

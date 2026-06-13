@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     .from('app_messages')
     .select('id, sender_id, recipient_id')
     .eq('id', id)
+    .or(`recipient_id.eq.${user.id},sender_id.eq.${user.id}`)
     .single()
 
   if (loadError || !message) {

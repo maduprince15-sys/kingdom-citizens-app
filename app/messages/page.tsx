@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import ArchiveMessageButton from './ArchiveMessageButton'
+import EncryptedMessageText from './EncryptedMessageText'
 
 export default async function MessagesPage() {
   const supabase = await createClient()
@@ -137,7 +138,7 @@ export default async function MessagesPage() {
                   </p>
 
                   <p className='mt-2 line-clamp-2 text-sm leading-6 text-gray-300'>
-                    {message.body}
+                    <EncryptedMessageText body={message.body} preview />
                   </p>
 
                   <p className='mt-4 text-xs text-gray-500'>

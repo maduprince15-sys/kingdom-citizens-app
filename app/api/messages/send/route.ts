@@ -29,10 +29,10 @@ export async function POST(request: Request) {
   const bodyData = await request.json()
   const recipientId = bodyData?.recipientId
   const subject = String(bodyData?.subject || '').trim()
-  const body = String(bodyData?.body || '').trim()
+  const encryptedBody = String(bodyData?.encryptedBody || '').trim()
   const parentMessageId = bodyData?.parentMessageId || null
 
-  if (!subject || !body) {
+  if (!subject || !encryptedBody || !isEncryptedMessageBody(encryptedBody)) {
     return NextResponse.json({ error: 'Subject and message are required.' }, { status: 400 })
   }
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         sender_name: senderName,
         recipient_id: recipient.id,
         subject,
-        body,
+        body: encryptedBody,
         parent_message_id: parentMessageId,
       })) || []
 
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       recipients?.map((recipient) => ({
         user_id: recipient.id,
         title: 'New Broadcast Message',
-        message: `You received a broadcast message from ${senderName}: ${subject}`,
+        message: 'New encrypted message',
         notification_type: 'message',
         link_url: '/messages',
         created_by: user.id,
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     sender_name: senderName,
     recipient_id: recipientId,
     subject,
-    body,
+    body: encryptedBody,
     parent_message_id: parentMessageId,
   })
 
@@ -142,11 +142,35 @@ export async function POST(request: Request) {
   await admin.from('notifications').insert({
     user_id: recipientId,
     title: 'New Message',
-    message: `You received a new message from ${senderName}: ${subject}`,
+    message: 'New encrypted message',
     notification_type: 'message',
     link_url: '/messages',
     created_by: user.id,
   })
 
   return NextResponse.json({ success: true })
+}
+
+function isEncryptedMessageBody(value: string) {
+  try {
+    const parsed = JSON.parse(value) as {
+      encrypted?: unknown
+      payload?: {
+        version?: unknown
+        algorithm?: unknown
+        ciphertext?: unknown
+        iv?: unknown
+      }
+    }
+
+    return (
+      parsed.encrypted === true &&
+      parsed.payload?.version === 1 &&
+      parsed.payload?.algorithm === 'AES-GCM' &&
+      typeof parsed.payload.ciphertext === 'string' &&
+      typeof parsed.payload.iv === 'string'
+    )
+  } catch {
+    return false
+  }
 }

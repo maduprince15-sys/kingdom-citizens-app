@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
+import EncryptedMessageText from '../EncryptedMessageText'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -26,12 +27,13 @@ export default async function MessageDetailPage({ params }: Props) {
     .single()
 
   const role = currentProfile?.role ?? 'member'
-const canReply = true
+  const canReply = true
 
   const { data: message, error } = await supabase
     .from('app_messages')
     .select('id, subject, body, read_at, created_at, sender_id, sender_name, recipient_id')
     .eq('id', id)
+    .or(`recipient_id.eq.${user.id},sender_id.eq.${user.id}`)
     .single()
 
   if (error || !message) {
@@ -91,7 +93,7 @@ const canReply = true
           <h2 className='text-2xl font-bold md:text-4xl'>{message.subject}</h2>
 
           <div className='mt-6 whitespace-pre-wrap text-base leading-8 text-gray-200'>
-            {message.body}
+            <EncryptedMessageText body={message.body} className='block' />
           </div>
         </article>
 
