@@ -20,6 +20,9 @@
 # production
 /build
 
+# capacitor native projects are generated locally for APK builds
+/android/
+
 # misc
 .DS_Store
 *.pem

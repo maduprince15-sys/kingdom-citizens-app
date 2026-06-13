@@ -21,7 +21,7 @@ export default async function HomePage() {
     .limit(5)
 
   return (
-    <main className='min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
+    <main className='kc-mobile-shell min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
       <PublicHeader />
 
       <section className='relative overflow-hidden border-b border-yellow-900/40 bg-gradient-to-br from-[#210808] via-[#0b0505] to-black px-4 py-10 md:px-8 md:py-16'>
@@ -36,7 +36,7 @@ export default async function HomePage() {
               Christ-centered teaching and spiritual formation community
             </div>
 
-            <h1 className='mt-6 text-5xl font-black leading-tight tracking-tight md:text-7xl'>
+            <h1 className='mt-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-7xl'>
               The Kingdom <br />
               Citizens
             </h1>
@@ -46,10 +46,10 @@ export default async function HomePage() {
               Christ, in the Word, in prayer, and in spiritual formation.
             </p>
 
-            <div className='mt-8 flex flex-wrap gap-4'>
+            <div className='kc-mobile-actions mt-8'>
               <Link
                 href='/public/posts'
-                className='rounded-full border border-yellow-700/70 px-6 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-900/20'
+                className='rounded-full border border-yellow-700/70 px-6 py-3 text-center text-sm font-bold text-yellow-300 hover:bg-yellow-900/20'
               >
                 Explore Posts
               </Link>

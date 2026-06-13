@@ -9,19 +9,19 @@ export default function PublicHeader() {
   return (
     <>
       <header className='sticky top-0 z-50 border-b border-yellow-900/40 bg-[#120505]/95 px-4 py-4 text-white backdrop-blur md:px-8'>
-        <div className='mx-auto flex max-w-6xl items-center justify-between'>
-          <Link href='/' className='flex items-center gap-4'>
+        <div className='mx-auto flex max-w-6xl items-center justify-between gap-3'>
+          <Link href='/' className='flex min-w-0 items-center gap-3 md:gap-4'>
             <img
               src='/kingdom-citizens-logo.png'
               alt='The Kingdom Citizens'
               className='h-16 w-16 rounded-full object-cover md:h-20 md:w-20'
             />
 
-            <div>
-              <h1 className='text-xl font-bold leading-tight text-yellow-400 md:text-2xl'>
+            <div className='min-w-0'>
+              <h1 className='truncate text-lg font-bold leading-tight text-yellow-400 sm:text-xl md:text-2xl'>
                 The Kingdom Citizens
               </h1>
-              <p className='text-xs text-gray-300 md:text-sm'>
+              <p className='truncate text-xs text-gray-300 md:text-sm'>
                 Our address is in Christ
               </p>
             </div>
@@ -29,7 +29,7 @@ export default function PublicHeader() {
 
           <button
             onClick={() => setOpen(!open)}
-            className='rounded-lg border border-yellow-800/60 px-4 py-2 text-2xl leading-none text-yellow-400 hover:bg-yellow-900/20'
+            className='shrink-0 rounded-lg border border-yellow-800/60 px-4 py-2 text-2xl leading-none text-yellow-400 hover:bg-yellow-900/20'
             aria-label='Open menu'
           >
             ☰

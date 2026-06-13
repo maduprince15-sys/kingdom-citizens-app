@@ -15,12 +15,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'The Kingdom Citizens',
+  applicationName: 'Kingdom Citizens',
   description:
     'The Kingdom Citizens platform for teachings, meetings, prayer, books, posts, calendar, giving, and member community.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/kingdom-citizens-logo.png',
-    apple: '/kingdom-citizens-logo.png',
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/icons/icon-192.png',
   },
   appleWebApp: {
     capable: true,
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#120505',
+  themeColor: '#030711',
 }
 
 export default function RootLayout({

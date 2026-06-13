@@ -196,7 +196,7 @@ export default async function MembersPage() {
           ))}
         </div>
 
-        <div className='hidden overflow-hidden rounded-2xl border border-yellow-900/40 bg-[#090303] shadow-2xl shadow-black/40 md:block'>
+        <div className='kc-table-scroll hidden rounded-2xl border border-yellow-900/40 bg-[#090303] shadow-2xl shadow-black/40 md:block'>
           <div className='overflow-x-auto'>
             <table className='min-w-full'>
               <thead className='bg-[#160707]'>
