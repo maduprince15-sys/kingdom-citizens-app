@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from 'next/server'
 import { createClient as createRequestClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
+import { canDeleteUsers } from '../../../../lib/permissions'
 
 export async function POST(request: Request) {
   const supabase = await createRequestClient()
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single()
 
-  if (profileError || currentProfile?.role !== 'admin') {
+  if (profileError || !canDeleteUsers(currentProfile?.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

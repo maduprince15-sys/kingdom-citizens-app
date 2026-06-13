@@ -1,60 +1,78 @@
 # Security Audit
 
-Scope: Android Google login, Supabase auth route usage, privileged server APIs, private message storage, notifications, and private-message E2EE foundation.
+This is the final checkpoint audit for the current Kingdom Citizens stabilization pass. It does not claim the whole system is fully secure. It records what the repo proves and what still requires Supabase dashboard/database verification.
 
-Files inspected:
+## Files Inspected
 
-- `app/components/GoogleLoginButton.tsx`
-- `app/login/page.tsx`
-- `app/register/page.tsx`
-- `app/auth/callback/route.ts`
-- `lib/supabase/client.ts`
-- `lib/supabase/server.ts`
-- `lib/supabase/admin.ts`
-- `app/api/admin/update-role/route.ts`
-- `app/api/admin/delete-user/route.ts`
-- `app/api/announcements/create/route.ts`
-- `app/api/posts/create/route.ts`
-- `app/api/messages/send/route.ts`
-- `app/api/messages/archive/route.ts`
-- `app/messages/page.tsx`
-- `app/messages/sent/page.tsx`
-- `app/messages/[id]/page.tsx`
-- `app/chat/ChatRoom.tsx`
-- `.gitignore`
+- Supabase clients: `lib/supabase/client.ts`, `lib/supabase/server.ts`, `lib/supabase/admin.ts`
+- Permissions: `lib/permissions.ts`
+- Auth: `app/components/GoogleLoginButton.tsx`, `app/auth/callback/route.ts`, `app/api/auth/native-profile/route.ts`
+- Messages: `app/messages/*`, `app/api/messages/*`, `lib/e2ee/*`
+- Admin APIs: `app/api/admin/update-role/route.ts`, `app/api/admin/delete-user/route.ts`
+- Content APIs: `app/api/announcements/*`, `app/api/posts/*`, `app/api/chat/delete/route.ts`
+- Public/client forms under `app/public`, `app/profile`, `app/admin`, `app/posts`, `app/prayers`
+- Android: `capacitor.config.ts`, `android/app/src/main/AndroidManifest.xml`
+- Docs/tests under `docs/` and `scripts/`
 
-Fixed high risk issues:
+## High-Risk Findings Fixed
 
-- New private messages previously sent and stored plaintext in `app_messages.body`. New private-message bodies are now encrypted in the browser and the API rejects non-encrypted payloads.
-- Message notifications no longer contain message subject/body preview text; they use `New encrypted message`.
-- Google OAuth in the Android APK is guarded until a native return/deep-link flow is implemented. Web Google login remains enabled.
+- Private messages previously submitted plaintext body content. New private messages are encrypted client-side, and `/api/messages/send` rejects non-encrypted bodies.
+- Message notifications no longer preview private message content.
+- Android Google OAuth now has a native custom-scheme return path instead of a disabled guard.
+- Native Google account creation now creates/preserves the profile through a server route that verifies the Supabase access token.
 
-Fixed medium risk issues:
+## Medium-Risk Findings Fixed
 
 - Message detail reads are constrained to the authenticated sender or recipient.
 - Message archive reads are constrained to the authenticated sender or recipient.
-- Admin delete now blocks deleting owner/admin accounts through the admin delete route.
+- User deletion is aligned with `canDeleteUsers` and protects owner/admin accounts.
+- Message board/broadcast role rules are centralized in `lib/permissions.ts`.
 
-Confirmed:
+## Confirmed In Repo
 
-- The Supabase service role key is only referenced by `lib/supabase/admin.ts` and server API routes.
-- Client Supabase setup uses public/publishable configuration, not the service role key.
-- Privileged APIs call `supabase.auth.getUser()` and then load server-side profile/role data before privileged writes.
-- `.env*` is ignored by git.
-- Public content is rendered as React text in inspected pages; no inspected route used `dangerouslySetInnerHTML`.
+- The service role key, `SUPABASE_SERVICE_ROLE_KEY`, is only read by `lib/supabase/admin.ts`.
+- Service role use is server-side only.
+- Privileged API routes call `auth.getUser()` before privileged work.
+- Role updates reject self-role changes and invalid roles.
+- Owner accounts cannot be changed through the role update route.
+- Admins cannot assign owner/admin roles.
+- `.env*` is git-ignored.
+- No inspected private-message path logs plaintext body, OAuth code, access token, refresh token, or session.
 
-Deferred or still visible:
+## Service Role Usage
 
-- Full multi-device E2EE is not complete. Device key registration, recipient key wrapping, key recovery, key rotation, and verified devices remain future work.
-- Legacy private messages already stored in plaintext remain legacy plaintext until migrated or deleted.
-- Group chat messages remain plaintext.
-- Supabase RLS and storage bucket policies should still be reviewed in the Supabase dashboard as the database-level source of truth.
-- Android debug APKs are debug signed; release distribution still needs a release signing workflow.
+Service role is used for server-only operations that intentionally bypass RLS after app-side authorization:
 
-Supabase paths/tables touched by this work:
+- role update
+- account/user deletion
+- announcement/post insert/delete with media cleanup
+- notification creation
+- native profile setup after access token verification
 
-- `app_messages.body` stores ciphertext JSON for new private messages.
-- `notifications.message` stores a generic encrypted-message notice.
-- `profiles.role` is used for server-side authorization checks.
+This is acceptable only when RLS is also configured as defense in depth and the service role remains server-only.
 
-No OAuth tokens, service role keys, private message plaintext, provider tokens, or encryption keys should be logged or stored in normal client-readable fields by this implementation.
+## Still Requires Database Verification
+
+- Supabase RLS must be enabled and verified for all private tables.
+- Storage bucket policies must be reviewed for `content-media`, `book-covers`, `book-pdfs`, and `profile-photos`.
+- Dependency audit reports 12 findings after plugin installation; review with `npm audit` in a separate dependency hardening pass.
+
+## E2EE Truth State
+
+New private message bodies are encrypted before the send API. Supabase should receive ciphertext JSON only for new private messages, stored in `app_messages.body`.
+
+Not complete:
+
+- no production multi-device E2EE
+- no verified device trust
+- no key recovery
+- no group chat E2EE
+- legacy plaintext remains legacy and is labeled
+
+## Deferred Security Work
+
+- Apply and test `supabase/rls-policies.sql` in Supabase.
+- Add RLS regression tests against a real Supabase test project.
+- Add dependency audit remediation.
+- Add verified Android App Link support with `assetlinks.json`.
+- Add production E2EE key wrapping and device verification.

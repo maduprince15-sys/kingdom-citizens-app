@@ -1,21 +1,104 @@
 # Android Google Auth
 
-The web Google sign-in flow remains enabled for browser users through Supabase OAuth and the `/auth/callback` route.
+Kingdom Citizens supports two Google OAuth paths:
 
-In the Capacitor Android app, Google sign-in is intentionally guarded for now. A browser OAuth flow can complete in Chrome or a custom tab while the Capacitor WebView does not receive the Supabase session unless a native return path and deep-link handling are fully wired. That creates a broken login experience and can leave users thinking they are signed in when the app has no session.
+- Web browser redirect: `https://kingdom-citizens-app.vercel.app/auth/callback`
+- Android APK native return: `kingdomcitizens://auth/callback`
 
-Current Android APK behavior:
+The Capacitor Android app uses Capacitor as a hosted shell for:
 
-- The Google button is replaced with: `Google sign-in in the Android app needs native return setup. Use email login for now.`
-- Email and password login stays available.
-- No Google OAuth token is stored by the app.
-- No service role key, OAuth token, or private key is printed or stored in normal client fields.
+```text
+https://kingdom-citizens-app.vercel.app
+```
 
-Current web behavior:
+## Android Approach
 
-- `GoogleLoginButton` still calls `supabase.auth.signInWithOAuth`.
-- The provider remains `google`.
-- The redirect URL remains `${NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback`.
-- `app/auth/callback/route.ts` exchanges the OAuth code with `supabase.auth.exchangeCodeForSession`.
+The APK now uses Capacitor's native return flow:
 
-Future native Google login work should add a real Capacitor return path, Android intent filters, Supabase redirect URL allow-list entries, and a tested session handoff back into the app before enabling the button inside the APK.
+1. `GoogleLoginButton` detects the Android native runtime.
+2. Android starts Supabase Google OAuth with `skipBrowserRedirect: true`.
+3. The OAuth URL opens in Capacitor Browser.
+4. Supabase redirects to `kingdomcitizens://auth/callback`.
+5. AndroidManifest routes that URL back into the APK.
+6. The Capacitor App `appUrlOpen` listener extracts the auth code.
+7. The in-app Supabase client calls `exchangeCodeForSession`.
+8. The app verifies `supabase.auth.getSession()` returns a session.
+9. `/api/auth/native-profile` verifies the access token server-side and creates/preserves the member profile.
+10. The user is routed to `/dashboard`.
+
+The app does not log OAuth codes, access tokens, refresh tokens, or sessions.
+
+## AndroidManifest
+
+`android/app/src/main/AndroidManifest.xml` includes:
+
+```xml
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data
+        android:scheme="kingdomcitizens"
+        android:host="auth"
+        android:pathPrefix="/callback" />
+</intent-filter>
+```
+
+## Supabase Dashboard Redirect URLs
+
+Add both redirect URLs in Supabase Auth settings:
+
+```text
+https://kingdom-citizens-app.vercel.app/auth/callback
+kingdomcitizens://auth/callback
+```
+
+The Google Cloud OAuth client must also allow the hosted web callback where applicable. Custom scheme return is handled by Supabase redirect allow-listing and Android intent routing.
+
+## Web Behavior
+
+Normal browser users still see `Continue with Google`.
+
+The web path still calls:
+
+```text
+supabase.auth.signInWithOAuth({ provider: 'google' })
+```
+
+with:
+
+```text
+https://kingdom-citizens-app.vercel.app/auth/callback
+```
+
+`app/auth/callback/route.ts` still exchanges the code server-side and routes to `/dashboard`.
+
+## APK Behavior
+
+Android users also see `Continue with Google`.
+
+The APK path uses:
+
+```text
+kingdomcitizens://auth/callback
+```
+
+The old temporary guard message has been removed. Email/password login still works and remains the fallback if the Supabase dashboard redirect allow-list is not updated.
+
+## Test Steps
+
+1. Add the two Supabase redirect URLs above.
+2. Run `npm run build`.
+3. Run `npx cap sync android`.
+4. Run `cd android`.
+5. Run `.\gradlew assembleDebug`.
+6. Install the debug APK.
+7. Tap `Continue with Google`.
+8. Complete Google OAuth in the opened browser.
+9. Confirm the URL returns to the APK.
+10. Confirm the app reaches `/dashboard`.
+11. Confirm the user has a `profiles` row with role `member` unless an existing role was already present.
+
+## Limitations
+
+This is a custom-scheme deep link, not a verified Android App Link. A future Play Store release can add domain verification with `assetlinks.json` for a stronger App Link flow.

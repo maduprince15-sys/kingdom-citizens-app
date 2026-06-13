@@ -4,12 +4,12 @@ import assert from 'node:assert/strict'
 const doc = fs.readFileSync('docs/SECURITY_AUDIT.md', 'utf8')
 
 for (const phrase of [
-  'Fixed high risk issues',
-  'Fixed medium risk issues',
-  'Deferred or still visible',
+  'High-Risk Findings Fixed',
+  'Medium-Risk Findings Fixed',
+  'Deferred Security Work',
   'app_messages.body',
   'service role key',
-  'Group chat messages remain plaintext',
+  'no group chat E2EE',
 ]) {
   assert.match(doc, new RegExp(phrase.replaceAll('.', '\\.'), 'i'))
 }

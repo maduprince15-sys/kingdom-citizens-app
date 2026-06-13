@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
+import { BOARD_MESSAGE_ROLES, canBroadcastMessages } from '../../../lib/permissions'
 import MessageForm from './MessageForm'
 
 type Props = {
@@ -31,7 +32,7 @@ export default async function NewMessagePage({ searchParams }: Props) {
     .single()
 
   const role = profile?.role ?? 'member'
-  const canBroadcast = role === 'owner' || role === 'admin'
+  const canBroadcast = canBroadcastMessages(role)
 
   const query = supabase
     .from('profiles')
@@ -41,7 +42,7 @@ export default async function NewMessagePage({ searchParams }: Props) {
 
   const { data: recipients } = canBroadcast
     ? await query
-    : await query.in('role', ['owner', 'admin', 'moderator', 'teacher'])
+    : await query.in('role', BOARD_MESSAGE_ROLES)
 
   const defaultSubject = params.subject
     ? decodeURIComponent(params.subject)

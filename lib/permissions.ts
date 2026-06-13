@@ -32,6 +32,13 @@ export const ADMIN_ASSIGNABLE_ROLES: AppRole[] = [
   'member',
 ]
 
+export const BOARD_MESSAGE_ROLES: AppRole[] = [
+  'owner',
+  'admin',
+  'moderator',
+  'teacher',
+]
+
 export function canManageRoles(role: string | null | undefined) {
   return role === 'owner' || role === 'admin'
 }
@@ -47,6 +54,14 @@ export function canDeleteUsers(role: string | null | undefined) {
   // Later we can make this target-aware:
   // owner can delete admin; admin can delete lower offices/members.
   return role === 'owner'
+}
+
+export function canBroadcastMessages(role: string | null | undefined) {
+  return role === 'owner' || role === 'admin'
+}
+
+export function canReceiveMemberMessages(role: string | null | undefined) {
+  return BOARD_MESSAGE_ROLES.includes(role as AppRole)
 }
 
 export function canManageGiving(role: string | null | undefined) {

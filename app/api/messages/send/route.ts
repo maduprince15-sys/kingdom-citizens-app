@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
-
-const BOARD_ROLES = ['owner', 'admin', 'moderator', 'teacher']
+import { canBroadcastMessages, canReceiveMemberMessages } from '../../../../lib/permissions'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
     user.email ||
     'The Kingdom Citizens'
 
-  const senderIsOwnerOrAdmin = ['owner', 'admin'].includes(senderRole)
+  const senderIsOwnerOrAdmin = canBroadcastMessages(senderRole)
 
   const admin = createAdminClient()
 
@@ -119,7 +118,7 @@ export async function POST(request: Request) {
 
   const recipientRole = recipientProfile.role || 'member'
 
-  if (!senderIsOwnerOrAdmin && !BOARD_ROLES.includes(recipientRole)) {
+  if (!senderIsOwnerOrAdmin && !canReceiveMemberMessages(recipientRole)) {
     return NextResponse.json(
       { error: 'Members can only send messages to board members.' },
       { status: 403 }

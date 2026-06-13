@@ -1,34 +1,101 @@
 # Private Message E2EE
 
-New private messages now encrypt the message body in the browser before calling `/api/messages/send`.
+New private message bodies are encrypted in the browser before reaching `/api/messages/send`.
 
-Implemented:
+## Encrypted Now
 
-- Client-side AES-GCM encryption for new private message bodies.
-- The API accepts `encryptedBody` and rejects plaintext message body submissions.
-- The existing `app_messages.body` column stores only ciphertext JSON for new private messages.
-- Message notifications use the generic text `New encrypted message` instead of previewing message content.
-- Inbox, sent, and message detail pages decrypt encrypted bodies on the client when the local key exists.
-- Legacy plaintext messages are still displayed as legacy data so existing conversations do not disappear.
+- New private message body text.
+- Stored payload in `app_messages.body` for new private messages.
+- Inbox, sent, and detail message rendering decrypt locally when the device has the key.
 
-Visible metadata:
+Encryption happens in:
 
-- Sender id and sender name.
-- Recipient id.
-- Subject.
-- Created time.
-- Read and archived state.
-- Notification existence.
-- Approximate message size through ciphertext length.
+```text
+app/messages/new/MessageForm.tsx
+lib/e2ee/messages.ts
+lib/e2ee/crypto.ts
+```
 
-Not yet complete:
+The API accepts `encryptedBody`, validates a version `1` AES-GCM payload, and rejects plaintext `body` submissions.
 
-- This is not full production multi-device E2EE.
-- Device public keys, recipient key wrapping, multi-device recovery, key rotation, and verified device identity are not implemented yet.
-- A recipient on another device may see `Encrypted message - this device does not have the key.`
-- Existing plaintext private messages are not migrated.
-- Group chat messages in `chat_messages` remain plaintext and are outside this private-message E2EE pass.
+## Server Plaintext Status
 
-Plaintext exclusion rule:
+For new private messages, Supabase should not receive plaintext message body content. The client sends ciphertext JSON only:
 
-New private message plaintext must not be sent to `/api/messages/send`, stored in Supabase, included in notifications, or logged. The server validates that the submitted body is an encrypted payload with version `1`, algorithm `AES-GCM`, `ciphertext`, and `iv`.
+```json
+{
+  "encrypted": true,
+  "payload": {
+    "version": 1,
+    "algorithm": "AES-GCM",
+    "ciphertext": "...",
+    "iv": "..."
+  }
+}
+```
+
+Notification preview text is always:
+
+```text
+New encrypted message
+```
+
+## Visible Metadata
+
+The server and database still see:
+
+- sender id
+- sender name
+- recipient id
+- subject
+- created time
+- read/archive timestamps
+- notification existence
+- approximate message size from ciphertext length
+
+Subjects are not encrypted in this pass.
+
+## Legacy Plaintext
+
+Legacy plaintext messages already stored before this pass are treated as legacy plaintext. The message detail UI labels them as `Legacy plaintext`, and message lists preview them as `Legacy plaintext message`.
+
+No silent migration is performed. A future migration should either:
+
+- leave legacy rows clearly marked, or
+- let a user intentionally re-encrypt messages from a trusted device.
+
+## Key Management Limitations
+
+This is not full production multi-device E2EE.
+
+Current key model:
+
+- A device-local AES-GCM key is generated in the browser.
+- The private key is stored locally on that device.
+- The server does not receive the local encryption key.
+
+Limitations:
+
+- A new device may not decrypt older encrypted messages.
+- There is no recovery if the local key is lost.
+- There is no verified device trust flow yet.
+- There is no public key registration or per-recipient wrapped conversation key yet.
+- There is no key rotation UX.
+
+## Not Encrypted
+
+- Group chat messages in `chat_messages`.
+- Message subjects.
+- Public announcements, posts, prayers, meetings, books, or study content.
+- Notification metadata.
+
+## Production Roadmap
+
+To reach production multi-device E2EE, add:
+
+1. Per-device asymmetric key pairs.
+2. Public key registration in Supabase.
+3. Conversation keys wrapped for each participant device.
+4. Device verification/trust UX.
+5. Key rotation and recovery design.
+6. Group E2EE design for group chat if required.

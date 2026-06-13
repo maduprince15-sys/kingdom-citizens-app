@@ -78,4 +78,5 @@ Keep the keystore private. Losing the keystore can prevent updates to the same A
 
 - The generated `android/` folder is ignored by default to avoid committing a large native project accidentally.
 - Run `npx cap sync android` after changing `capacitor.config.ts`, native plugins, icons, or web assets.
+- Run `npx cap sync android` after changing Android deep links, including the Google login custom scheme.
 - The hosted app URL must stay HTTPS because `cleartext` is disabled.
