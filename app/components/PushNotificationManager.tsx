@@ -13,6 +13,8 @@ type PushStatus =
   | 'failed'
 
 const DENIED_STORAGE_KEY = 'kingdom-citizens:push-permission-denied'
+const CHANNEL_ID = 'kingdom_citizens_default'
+const DEV = process.env.NODE_ENV === 'development'
 
 export default function PushNotificationManager() {
   const [nativeApp, setNativeApp] = useState(false)
@@ -35,6 +37,7 @@ export default function PushNotificationManager() {
       if (permission.receive === 'granted') {
         setStatus('enabled')
         setMessage('Notifications enabled')
+        await setupPushRegistration()
       } else if (
         permission.receive === 'denied' ||
         window.localStorage.getItem(DENIED_STORAGE_KEY) === 'true'
@@ -52,57 +55,112 @@ export default function PushNotificationManager() {
     })
   }, [])
 
+  async function createNotificationChannels() {
+    const { PushNotifications } = await import('@capacitor/push-notifications')
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+
+    await PushNotifications.createChannel({
+      id: CHANNEL_ID,
+      name: 'Kingdom Citizens',
+      description: 'Kingdom Citizens app notifications',
+      importance: 5,
+      visibility: 1,
+    }).catch(() => undefined)
+
+    await LocalNotifications.createChannel({
+      id: CHANNEL_ID,
+      name: 'Kingdom Citizens',
+      description: 'Kingdom Citizens app notifications',
+      importance: 5,
+      visibility: 1,
+    }).catch(() => undefined)
+  }
+
+  async function registerToken(value: string) {
+    const response = await fetch('/api/notifications/register-device', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: value,
+        platform: 'android',
+        deviceLabel: navigator.userAgent.slice(0, 120),
+      }),
+    })
+
+    if (!response.ok) {
+      setStatus('failed')
+      setMessage('Notification token registration failed.')
+      return
+    }
+
+    window.localStorage.removeItem(DENIED_STORAGE_KEY)
+    setStatus('enabled')
+    setMessage('Notifications enabled')
+
+    if (DEV) {
+      setMessage('Notifications enabled. FCM token saved for this user.')
+    }
+  }
+
+  async function setupPushRegistration() {
+    const { PushNotifications } = await import('@capacitor/push-notifications')
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+
+    await createNotificationChannels()
+    await PushNotifications.removeAllListeners()
+
+    await PushNotifications.addListener('registration', ({ value }) => {
+      void registerToken(value)
+    })
+
+    await PushNotifications.addListener('registrationError', () => {
+      setStatus('failed')
+      setMessage('Notification registration failed.')
+    })
+
+    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      void LocalNotifications.schedule({
+        notifications: [
+          {
+            id: Date.now() % 2147483647,
+            title: notification.title || 'Kingdom Citizens',
+            body: notification.body || 'New notification',
+            channelId: CHANNEL_ID,
+            extra: notification.data,
+            schedule: { at: new Date(Date.now() + 250) },
+          },
+        ],
+      })
+    })
+
+    await PushNotifications.register()
+  }
+
   async function enableNotifications() {
     setStatus('requesting')
     setMessage('Requesting notification permission...')
 
     try {
       const { PushNotifications } = await import('@capacitor/push-notifications')
+      const { LocalNotifications } = await import('@capacitor/local-notifications')
       let permission = await PushNotifications.checkPermissions()
 
       if (permission.receive !== 'granted') {
         permission = await PushNotifications.requestPermissions()
       }
 
-      if (permission.receive !== 'granted') {
+      const localPermission = await LocalNotifications.requestPermissions()
+
+      if (permission.receive !== 'granted' || localPermission.display !== 'granted') {
         window.localStorage.setItem(DENIED_STORAGE_KEY, 'true')
         setStatus('blocked')
         setMessage('Notifications blocked in Android settings')
         return
       }
 
-      await PushNotifications.removeAllListeners()
-
-      await PushNotifications.addListener('registration', async ({ value }) => {
-        const response = await fetch('/api/notifications/register-device', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            token: value,
-            platform: 'android',
-            deviceLabel: navigator.userAgent.slice(0, 120),
-          }),
-        })
-
-        if (!response.ok) {
-          setStatus('failed')
-          setMessage('Notification token registration failed.')
-          return
-        }
-
-        window.localStorage.removeItem(DENIED_STORAGE_KEY)
-        setStatus('enabled')
-        setMessage('Notifications enabled')
-      })
-
-      await PushNotifications.addListener('registrationError', () => {
-        setStatus('failed')
-        setMessage('Notification registration failed.')
-      })
-
-      await PushNotifications.register()
+      await setupPushRegistration()
     } catch {
       setStatus('failed')
       setMessage('Could not enable notifications.')
@@ -141,4 +199,3 @@ export default function PushNotificationManager() {
     </div>
   )
 }
-

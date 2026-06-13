@@ -3,6 +3,8 @@ import 'server-only'
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
 
+export const ANDROID_NOTIFICATION_CHANNEL_ID = 'kingdom_citizens_default'
+
 type PushPayload = {
   token: string
   title: string
@@ -69,7 +71,7 @@ export async function sendPushToToken(input: PushPayload) {
     android: {
       priority: 'high',
       notification: {
-        channelId: 'kingdom-citizens',
+        channelId: ANDROID_NOTIFICATION_CHANNEL_ID,
       },
     },
   })
@@ -97,7 +99,7 @@ export async function sendPushToTokens(input: MultiPushPayload) {
     android: {
       priority: 'high',
       notification: {
-        channelId: 'kingdom-citizens',
+        channelId: ANDROID_NOTIFICATION_CHANNEL_ID,
       },
     },
   })
@@ -120,4 +122,3 @@ export async function sendPushToTokens(input: MultiPushPayload) {
     invalidTokens,
   }
 }
-

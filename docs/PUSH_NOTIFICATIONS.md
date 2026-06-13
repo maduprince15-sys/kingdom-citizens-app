@@ -12,6 +12,7 @@ Kingdom Citizens uses:
 
 ```text
 @capacitor/push-notifications
+@capacitor/local-notifications
 ```
 
 for Android APK push registration.
@@ -22,9 +23,13 @@ for Android APK push registration.
 - It detects the Capacitor native app.
 - It checks notification permission.
 - It shows an `Enable notifications` button.
-- It requests permission only after user action.
+- It requests Android 13+ notification permission only after user action.
 - It does not repeatedly request after denial.
 - It registers with Capacitor Push Notifications when permission is granted.
+- If permission is already granted after login, it registers the current FCM token again so Supabase stays current.
+- It updates Supabase whenever Capacitor emits a new FCM token.
+- It creates the Android notification channel `kingdom_citizens_default`.
+- Foreground FCM messages are displayed as native local notifications.
 - It sends the device token to `/api/notifications/register-device`.
 - The API stores the token for the authenticated Supabase user only.
 - `lib/firebase-admin-push.ts` sends pushes server-side through Firebase Admin when configured.
@@ -127,6 +132,13 @@ Data payload:
   "href": "/messages"
 }
 ```
+
+FCM payload requirements:
+
+- includes `notification.title` and `notification.body`
+- includes `data`
+- uses `android.priority = high`
+- uses `android.notification.channelId = kingdom_citizens_default`
 
 Announcement push can be sent by allowed roles through `/api/notifications/send-push`. Automatic announcement broadcast on every announcement create is not enabled yet.
 

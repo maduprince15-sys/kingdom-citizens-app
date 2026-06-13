@@ -10,7 +10,9 @@ for (const phrase of [
   'supabase/push-notifications.sql',
   'Enable notifications',
   'New encrypted message',
-  'Push sending is not fully wired',
+  'Push sending is wired in code',
+  'kingdom_citizens_default',
+  '@capacitor/local-notifications',
 ]) {
   assert.match(docs, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))
 }
