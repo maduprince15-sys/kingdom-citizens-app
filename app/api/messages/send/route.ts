@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { canBroadcastMessages, canReceiveMemberMessages } from '../../../../lib/permissions'
+import { sendPrivateMessagePush } from '../../../../lib/push-notifications'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -103,6 +104,11 @@ export async function POST(request: Request) {
       await admin.from('notifications').insert(notificationRows)
     }
 
+    await sendPrivateMessagePush(
+      admin,
+      recipients?.map((recipient) => recipient.id) || []
+    )
+
     return NextResponse.json({ success: true })
   }
 
@@ -146,6 +152,8 @@ export async function POST(request: Request) {
     link_url: '/messages',
     created_by: user.id,
   })
+
+  await sendPrivateMessagePush(admin, [recipientId])
 
   return NextResponse.json({ success: true })
 }

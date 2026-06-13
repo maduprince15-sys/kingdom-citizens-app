@@ -82,3 +82,12 @@ Keep the keystore private. Losing the keystore can prevent updates to the same A
 - Run `npx cap sync android` after adding native plugins such as Capacitor Browser, App, or Push Notifications.
 - Uninstall the old APK before installing a rebuilt debug APK when testing auth, push notifications, or launcher icon changes.
 - The hosted app URL must stay HTTPS because `cleartext` is disabled.
+
+Full rebuild sequence after native Android, manifest, plugin, or Firebase config changes:
+
+```powershell
+npm run build
+npx cap sync android
+cd android
+.\gradlew assembleDebug
+```
