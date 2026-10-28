@@ -9,8 +9,6 @@ import {
 } from '../../lib/android-google-auth'
 import { isAndroidNativeApp } from '../../lib/mobile-runtime'
 
-const DEV = process.env.NODE_ENV === 'development'
-
 export default function AndroidAuthReturnHandler() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -21,67 +19,69 @@ export default function AndroidAuthReturnHandler() {
 
     let active = true
     let listener: { remove: () => Promise<void> } | undefined
+    let processing = false
 
     async function handleUrl(url: string) {
-      if (!url.startsWith('kingdomcitizens://auth/callback')) return
+      if (!url.startsWith('kingdomcitizens://auth/callback') || processing) return
+      processing = true
+      setStatus('Completing Google sign-in...')
 
-      if (DEV) setStatus('Waiting for Android return...')
+      try {
+        const result = await handleAndroidGoogleCallback(supabase, url)
+        if (!active || !result.handled) return
 
-      const result = await handleAndroidGoogleCallback(supabase, url)
+        if (result.error) {
+          setStatus(result.error)
+          return
+        }
 
-      if (!active || !result.handled) return
+        const profileResult = await completeNativeProfileSetup(supabase)
+        if (!active) return
 
-      if (result.error) {
-        setStatus(result.error)
-        return
+        if (!profileResult.ok) {
+          setStatus(profileResult.error)
+          return
+        }
+
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.close().catch(() => undefined)
+        setStatus(null)
+        router.replace('/dashboard')
+        router.refresh()
+      } catch (error) {
+        if (active) {
+          setStatus(error instanceof Error ? error.message : 'Google sign-in could not be completed.')
+        }
+      } finally {
+        processing = false
       }
-
-      const profileResult = await completeNativeProfileSetup(supabase)
-
-      if (!active) return
-
-      if (!profileResult.ok) {
-        setStatus(profileResult.error)
-        return
-      }
-
-      const { Browser } = await import('@capacitor/browser')
-      await Browser.close().catch(() => undefined)
-
-      if (DEV) setStatus('Google sign-in completed.')
-      router.replace('/dashboard')
-      router.refresh()
     }
 
     async function setupListener() {
       const { App } = await import('@capacitor/app')
-
       listener = await App.addListener('appUrlOpen', ({ url }) => {
         void handleUrl(url)
       })
 
       const launch = await App.getLaunchUrl()
-      if (launch?.url) {
-        await handleUrl(launch.url)
-      }
+      if (launch?.url) await handleUrl(launch.url)
     }
 
     setupListener().catch(() => {
-      if (active) setStatus('Google sign-in did not return a session.')
+      if (active) setStatus('Could not listen for the Google sign-in return link.')
     })
 
     return () => {
       active = false
-      listener?.remove()
+      void listener?.remove()
     }
   }, [router, supabase])
 
-  if (!DEV || !status) return null
+  if (!status) return null
 
   return (
-    <div className='fixed bottom-3 left-3 right-3 z-50 rounded border border-yellow-700 bg-black/90 px-4 py-3 text-sm text-yellow-200 shadow-lg md:left-auto md:right-3 md:max-w-sm'>
+    <div role='alert' className='fixed bottom-3 left-3 right-3 z-50 rounded border border-yellow-700 bg-black/90 px-4 py-3 text-sm text-yellow-200 shadow-lg md:left-auto md:right-3 md:max-w-sm'>
       {status}
     </div>
   )
 }
-
