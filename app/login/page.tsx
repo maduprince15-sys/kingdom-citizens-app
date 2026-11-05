@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 import GoogleLoginButton from '../components/GoogleLoginButton'
 
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -64,26 +64,23 @@ export default function LoginPage() {
   }
 
   return (
-    <main className='min-h-screen bg-[#050303] text-white'>
+    <main className='kc-site min-h-screen bg-[#050303] text-white'>
       <section className='flex min-h-screen items-center justify-center px-4 py-10'>
-        <div className='w-full max-w-md overflow-hidden rounded-3xl border border-yellow-900/40 bg-[#120707] shadow-2xl shadow-black/50'>
-          <div className='bg-gradient-to-br from-black via-[#180707] to-[#260909] p-6 text-center'>
+        <div className='w-full max-w-md overflow-hidden rounded-[2rem] kc-glass shadow-2xl shadow-black/50'>
+          <div className='p-6 pb-3 text-center'>
             <img
               src='/kingdom-citizens-logo.png'
               alt='The Kingdom Citizens'
-              className='mx-auto h-24 w-24 rounded-full object-cover'
+              className='mx-auto h-16 w-16 rounded-full object-cover'
             />
 
-            <p className='mt-4 text-xs uppercase tracking-[0.35em] text-yellow-500'>
-              The Kingdom Citizens
-            </p>
 
             <h1 className='mt-2 text-3xl font-black'>
-              Member Login
+              Member sign in
             </h1>
 
             <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Enter the Kingdom Citizens dashboard, messages, calendar, prayer wall, and member tools.
+              Access your Kingdom Citizens community.
             </p>
           </div>
 
@@ -98,7 +95,7 @@ export default function LoginPage() {
                   placeholder='Enter your email'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className='w-full rounded-xl border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
+                  className='kc-auth-input'
                   required
                 />
               </div>
@@ -112,7 +109,7 @@ export default function LoginPage() {
                   placeholder='Enter your password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className='w-full rounded-xl border border-gray-300 bg-white p-3 text-black placeholder-gray-500'
+                  className='kc-auth-input'
                   required
                 />
               </div>
@@ -120,9 +117,9 @@ export default function LoginPage() {
               <button
                 type='submit'
                 disabled={loading}
-                className='w-full rounded-full bg-yellow-500 p-3 font-bold text-black hover:bg-yellow-400 disabled:opacity-50'
+                className='w-full rounded-xl bg-[#c7a366] p-3 font-bold text-[#1b0d0e] hover:bg-[#e6c78f] disabled:opacity-50'
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
 

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050303;
+  --foreground: #f7f1ef;
 }
 
 @theme inline {
@@ -29,7 +29,7 @@ body {
 
 html {
   overflow-x: hidden;
-  background: #030711;
+  background: #050303;
 }
 
 img,
@@ -104,3 +104,17 @@ a {
     width: auto;
   }
 }
+
+/* Burgundy and gold remain Kingdom Citizens' visual identity. */
+.kc-site { background: #050303; background-image: radial-gradient(ellipse at 82% 4%, rgba(117, 36, 45, .12), transparent 42%); }
+.kc-glass {
+  background: linear-gradient(140deg, rgba(55,22,27,.84), rgba(13,7,9,.90));
+  border: 1px solid rgba(209,167,102,.22);
+  box-shadow: 0 16px 48px rgba(0,0,0,.22);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.kc-auth-input { width:100%; border:1px solid rgba(208,177,124,.28); border-radius:.875rem; background:rgba(14,7,9,.72); color:#fff; padding:.85rem 1rem; outline:none; }
+.kc-auth-input::placeholder { color:#a59893; }
+.kc-auth-input:focus-visible { border-color:#dbbe8c; box-shadow:0 0 0 3px rgba(207,163,101,.12); }
+@media (prefers-reduced-motion:reduce) { .kc-site *, .kc-site *::before, .kc-site *::after { transition-duration:.01ms !important; } }
