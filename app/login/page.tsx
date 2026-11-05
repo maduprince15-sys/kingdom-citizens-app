@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { createClient } from '../../lib/supabase/client'
+import { createClient, supabaseConfigured } from '../../lib/supabase/client'
 import GoogleLoginButton from '../components/GoogleLoginButton'
 
 export default function LoginPage() {
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
+    if (!supabaseConfigured) { setCheckingUser(false); return }
     async function checkUser() {
       const {
         data: { user },
@@ -85,6 +86,11 @@ export default function LoginPage() {
           </div>
 
           <div className='p-6'>
+            {!supabaseConfigured && (
+              <p role="status" className="mb-4 rounded-xl border border-amber-400/30 bg-amber-100/[.07] p-4 text-sm leading-6 text-[#f3d99f]">
+                This Preview is for design review. Member sign-in needs a separate test database connection.
+              </p>
+            )}
             <form onSubmit={handleLogin} className='space-y-4'>
               <div>
                 <label className='mb-2 block text-sm text-gray-300'>
@@ -116,7 +122,7 @@ export default function LoginPage() {
 
               <button
                 type='submit'
-                disabled={loading}
+                disabled={loading || !supabaseConfigured}
                 className='w-full rounded-xl bg-[#c7a366] p-3 font-bold text-[#1b0d0e] hover:bg-[#e6c78f] disabled:opacity-50'
               >
                 {loading ? 'Signing in...' : 'Sign in'}

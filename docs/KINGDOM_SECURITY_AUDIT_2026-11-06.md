@@ -61,3 +61,6 @@ Supabase Auth advisor reports leaked-password protection disabled. Enable the pr
 6. Only after these pass should the design branch be promoted to Production.
 
 **Do not apply the SQL template in `supabase/rls-policies.sql` blindly.** Its role/view definitions and schema assumptions need to be reconciled against live permissions, existing data, trigger behavior and the login callback.
+
+## Preview environment note
+The first design Preview build passed the static checks and TypeScript compilation but failed during Next.js prerendering because Vercel has **no Preview Supabase variables** (`NEXT_PUBLIC_SUPABASE_URL` or publishable/anon key). Production has these variables, but copying them would point Preview to live member data and is intentionally avoided. The design branch now renders public pages with empty real-data sections and marks member authentication unavailable when no test backend exists. The reserved `.invalid` endpoint is a safe fail-closed build fallback, not a working Supabase project. A truly functional Preview requires a separate Supabase test project with test user accounts, schema/policies and Preview-only environment configuration.

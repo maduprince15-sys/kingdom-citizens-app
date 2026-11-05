@@ -2,7 +2,7 @@ import Link from 'next/link'
 import PublicHeader from './components/PublicHeader'
 import PublicFooter from './components/PublicFooter'
 import PinnedAnnouncementSlider from './components/PinnedAnnouncementSlider'
-import { createClient } from '../lib/supabase/server'
+import { createClient, supabaseServerConfigured } from '../lib/supabase/server'
 
 const sections = [
   { href: '/public/posts', title: 'Teachings', detail: 'Scripture and reflections' },
@@ -11,11 +11,24 @@ const sections = [
   { href: '/public/connect', title: 'Connect', detail: 'Official ministry channels' },
 ]
 export default async function HomePage() {
-  const supabase = await createClient()
-  const [{ data: meetings }, { data: notices }] = await Promise.all([
-    supabase.from('meetings').select('title, meeting_date, meeting_time, platform').order('meeting_date', { ascending: true }).limit(2),
-    supabase.from('app_announcements').select('id, title, content, image_url, video_url, created_at').eq('is_pinned', true).order('created_at', { ascending: false }).limit(5),
-  ])
+  let meetings: { title: string; meeting_date: string | null; meeting_time: string | null; platform: string | null }[] | null = null
+  let notices: { id: string; title: string; content: string; image_url: string | null; video_url: string | null; created_at: string }[] | null = null
+
+  // Public Preview deliberately remains disconnected until a separate test
+  // Supabase project is configured. Never fall back to Production credentials.
+  if (supabaseServerConfigured) {
+    const supabase = await createClient()
+    const [meetingResult, noticeResult] = await Promise.all([
+      supabase.from('meetings').select('title, meeting_date, meeting_time, platform')
+        .order('meeting_date', { ascending: true }).limit(2),
+      supabase.from('app_announcements')
+        .select('id, title, content, image_url, video_url, created_at')
+        .eq('is_pinned', true).order('created_at', { ascending: false }).limit(5),
+    ])
+    meetings = meetingResult.data
+    notices = noticeResult.data
+  }
+
   return (
     <main className="kc-site kc-mobile-shell min-h-screen bg-[#050303] text-white">
       <PublicHeader />
