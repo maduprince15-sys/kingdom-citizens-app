@@ -28,8 +28,7 @@ export default async function MembersPage() {
   const showDeleteControls = canDeleteUsers(actorRole)
 
   const { data: members, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, phone, role, created_at')
+.rpc('member_directory')
     .order('created_at', { ascending: false })
 
   const totalMembers = members?.length ?? 0

@@ -74,8 +74,7 @@ export default async function DashboardPage() {
   const currentDay = today.getDate()
 
   const { data: birthdayProfiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, birthday_month, birthday_day, show_birthday, avatar_url')
+.rpc('member_directory')
     .eq('show_birthday', true)
     .eq('birthday_month', currentMonth)
     .eq('birthday_day', currentDay)

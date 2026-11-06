@@ -49,7 +49,9 @@ export async function POST(request: Request) {
 
   const senderIsOwnerOrAdmin = canBroadcastMessages(senderRole)
 
-  const admin = createAdminClient()
+  // The Preview has no server-side admin key: authentication and secure
+  // message delivery must continue without privileged push notifications.
+  const admin = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null
 
   if (recipientId === 'all') {
     if (!senderIsOwnerOrAdmin) {
@@ -60,8 +62,7 @@ export async function POST(request: Request) {
     }
 
     const { data: recipients, error: recipientsError } = await supabase
-      .from('profiles')
-      .select('id')
+.rpc('member_directory')
       .neq('id', user.id)
 
     if (recipientsError) {
@@ -100,21 +101,18 @@ export async function POST(request: Request) {
         created_by: user.id,
       })) || []
 
-    if (notificationRows.length > 0) {
-      await admin.from('notifications').insert(notificationRows)
+    if (admin) {
+      if (notificationRows.length > 0) {
+        await admin.from('notifications').insert(notificationRows)
+      }
+      await sendPrivateMessagePush(admin, recipients?.map((recipient) => recipient.id) || [])
     }
-
-    await sendPrivateMessagePush(
-      admin,
-      recipients?.map((recipient) => recipient.id) || []
-    )
 
     return NextResponse.json({ success: true })
   }
 
   const { data: recipientProfile, error: recipientError } = await supabase
-    .from('profiles')
-    .select('role')
+.rpc('member_directory')
     .eq('id', recipientId)
     .single()
 
@@ -144,16 +142,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 400 })
   }
 
-  await admin.from('notifications').insert({
-    user_id: recipientId,
-    title: 'New Message',
-    message: 'New encrypted message',
-    notification_type: 'message',
-    link_url: '/messages',
-    created_by: user.id,
-  })
-
-  await sendPrivateMessagePush(admin, [recipientId])
+  if (admin) {
+    await admin.from('notifications').insert({
+      user_id: recipientId,
+      title: 'New Message',
+      message: 'New encrypted message',
+      notification_type: 'message',
+      link_url: '/messages',
+      created_by: user.id,
+    })
+    await sendPrivateMessagePush(admin, [recipientId])
+  }
 
   return NextResponse.json({ success: true })
 }

@@ -54,8 +54,7 @@ export default async function BirthdaysPage() {
   const currentDay = today.getDate()
 
   const { data: birthdays, error: birthdaysError } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, birthday_month, birthday_day, show_birthday')
+.rpc('member_directory')
     .eq('show_birthday', true)
     .not('birthday_month', 'is', null)
     .not('birthday_day', 'is', null)

@@ -62,4 +62,9 @@ assert.ok(appLayout.includes('/og-kingdom-citizens.png'),
 const manifest = read('public/manifest.json')
 assert.ok(manifest.includes('"theme_color": "#12090b"'), 'Keep original burgundy palette in PWA')
 
+for (const p of ['app/dashboard/page.tsx','app/birthdays/page.tsx','app/members/page.tsx','app/messages/new/page.tsx','app/api/messages/send/route.ts']) {
+  assert.ok(read(p).includes(".rpc('member_directory')"), p + ' must use privacy-filtered directory')
+}
+assert.ok(read('app/api/messages/send/route.ts').includes('process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null'),
+ 'Preview messaging must not require an unavailable admin key')
 console.log('PASS Kingdom Citizens UI/auth/static audit contracts.')
