@@ -89,3 +89,16 @@ Structural backups before migrations:
 **Branding update:** The original user-approved image was imported without re-creation or design alteration. `public/kingdom-citizens-logo.png` and `public/logo.png` both have SHA256 `7c3b11e96fe1374c4f5472428b1a0e5ae9baebf05cf033c0050ec95dec66731c`. Generated PWA icons, Next.js favicon and social sharing image are derived from the same original. Header, homepage, authentication pages and PWA metadata use these assets. The release build checks byte identity before Preview publication.
 
 **Release:** Database policy changes were applied LIVE with the user's authorization. Website/logo changes remain in draft PR #1; no merge or deployment to the Production website has occurred.
+
+## Archived and expired content access: remediated on live database
+
+A separate migration `restrict_expired_and_archived_public_posts_and_announcements_20261106` replaced the three overlapping `USING(true)` SELECT policies on both `app_posts` and `app_announcements`. Only non-archived/unexpired posts and announcements remain public. An author and authorized ministry leadership can still review their own or moderated archived records. Original policies were backed up at `docs/security/kingdom-post-announcement-policies-before-fix-20261106.json`.
+
+**Verification:** 2 post rows remained, of which 1 is now eligible for public view and 1 expired row is excluded from the public policy. No announcement rows or authored records were modified. Both tables have precisely two intentional SELECT policies, no `USING(true)` read policy. Role-, archive-, membership-, storage- and authentication-sensitive functions still require two-account end-to-end tests.
+
+**Final Supabase Advisor:** No formerly flagged SECURITY DEFINER function warnings remain. Outstanding:
+- Six RLS-enabled tables without policies — informational until their usage is reconciled.
+- Leaked-password protection remains disabled — must enable through Supabase Auth project settings.
+- Authenticated clients still have broad `profiles` SELECT access to other member records to support the existing production member directory; this is a **remaining PII concern**, requiring a directory view/API and coordinated rollout. Password-manager-style protections or encryption claims must not be inferred from RLS alone.
+
+**Release remains gated:** Real user signup, email/Google login, native OAuth callback, profile edits, nonmember denial for private rooms, and admin role-update flows have not been fully tested after the live migration. Preserve member data and avoid any untested Production site merge.
