@@ -64,3 +64,28 @@ Supabase Auth advisor reports leaked-password protection disabled. Enable the pr
 
 ## Preview environment note
 The first design Preview build passed the static checks and TypeScript compilation but failed during Next.js prerendering because Vercel has **no Preview Supabase variables** (`NEXT_PUBLIC_SUPABASE_URL` or publishable/anon key). Production has these variables, but copying them would point Preview to live member data and is intentionally avoided. The design branch now renders public pages with empty real-data sections and marks member authentication unavailable when no test backend exists. The reserved `.invalid` endpoint is a safe fail-closed build fallback, not a working Supabase project. A truly functional Preview requires a separate Supabase test project with test user accounts, schema/policies and Preview-only environment configuration.
+
+## Implementation verification — November 6, 2026
+
+**Database: LIVE Supabase project `jngbhejfqbyjletfknkh` (committed Supabase migrations; no database member rows rewritten).**
+
+Completed and confirmed:
+- Anonymous `public.profiles` SELECT and other anonymous table privileges are revoked. Removed the permissive `USING (true)` PUBLIC profile-read policy. An authenticated member-directory SELECT policy remains temporarily so existing directory, recipient and staff views do not break.
+- Recreated own-profile UPDATE policy as `TO authenticated`, with explicit owner `USING` and `WITH CHECK`.
+- Added non-privileged `BEFORE UPDATE` trigger to reject client changes to `profiles.role`, `level`, `id` and `created_at`. Existing Google callback may upsert the unchanged role; the trigger allows unchanged values and still protects role changes. Service-role administrative changes remain possible. **Future:** refactor the Production callback and revoke all client column-level writes to role/level once production code has been deployed and end-to-end tested.
+- Chat messages under `group:<UUID>` now require active membership from `citizen_group_members`/active `citizen_groups`, or an authorized ministry leadership role. `study-resource:<UUID>` requires a published public resource or an authorized leadership role. General and study-general rooms remain available to members. Strict canonical UUID validation prevents malformed identifiers from causing casts.
+- Revoked anonymous/authenticated EXECUTE on internal `handle_new_user`, `rls_auto_enable` and profile guard functions. Fixed `handle_new_user` function search path.
+- Revoked `TRUNCATE`, `TRIGGER` and `REFERENCES` from **all existing** `public` tables for browser roles. These dangerous grants are not protected by row-level security. Normal authenticated profile SELECT/UPDATE and chat SELECT/INSERT remain granted.
+- Adjusted default `postgres` ownership ACL for new public tables/functions to avoid those privileges by default. The separate `supabase_admin` creator's defaults remain provider-managed and should be reviewed through a supported platform administrative route.
+
+Structural backups before migrations:
+- `docs/security/kingdom-permissions-before-fix-20261106.json`
+- `docs/security/kingdom-legacy-table-privileges-before-revocation.json`
+
+**Verification results:** `has_table_privilege('anon','public.profiles','SELECT') = false`; no remaining public table grants for client `TRUNCATE/TRIGGER/REFERENCES`; no anonymous/authenticated EXECUTE on reviewed internal definer functions; both chat policies contain strict UUID checks. Profile count **11**, with **2 owners** and **2 admins**, unchanged. Supabase's security advisor now reports only six intentional/unknown RLS-enabled tables with no policies (INFO) and leaked-password protection disabled (WARN).
+
+**Outstanding security/functionality gates:** A two-member end-to-end test with test identities is still needed for permission denial, normal signup and Google callback, private messaging, group membership, storage and recovery. Existing authenticated members can still query full `profiles` data for other members; replacing this with a privacy-safe directory requires coordinated UI changes and dedicated member views. Six RLS-without-policy tables require an intended-access review; do not add broad policies blindly. Leaked-password protection must be enabled and validated in Supabase Auth settings. Owner/admin role changes must be verified after any callback refactor.
+
+**Branding update:** The original user-approved image was imported without re-creation or design alteration. `public/kingdom-citizens-logo.png` and `public/logo.png` both have SHA256 `7c3b11e96fe1374c4f5472428b1a0e5ae9baebf05cf033c0050ec95dec66731c`. Generated PWA icons, Next.js favicon and social sharing image are derived from the same original. Header, homepage, authentication pages and PWA metadata use these assets. The release build checks byte identity before Preview publication.
+
+**Release:** Database policy changes were applied LIVE with the user's authorization. Website/logo changes remain in draft PR #1; no merge or deployment to the Production website has occurred.

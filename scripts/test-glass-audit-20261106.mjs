@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import { createHash } from 'node:crypto'
 const read = (path) => readFileSync(path, 'utf8')
 const paths = [
   'app/page.tsx', 'app/dashboard/page.tsx', 'app/login/page.tsx', 'app/register/page.tsx',
@@ -39,4 +40,26 @@ assert.ok(previewClient.includes('supabaseConfigured') && previewServer.includes
 assert.ok(previewClient.includes('https://preview-unconfigured.invalid') && previewServer.includes('https://preview-unconfigured.invalid'), 'No implicit Production database fallback')
 assert.ok(login.includes('disabled={loading || !supabaseConfigured}') && register.includes('disabled={loading || !supabaseConfigured}'), 'Sign-in and registration disabled when disconnected')
 assert.ok(home.includes('if (supabaseServerConfigured)') && !home.includes('NEXT_PUBLIC_SITE_URL'), 'Public home does not query Production without credentials')
+
+function fileHash(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex')
+}
+const originalLogoSHA256 = '7c3b11e96fe1374c4f5472428b1a0e5ae9baebf05cf033c0050ec95dec66731c'
+assert.equal(fileHash('public/kingdom-citizens-logo.png'),originalLogoSHA256,
+  'Primary site logo must match the owner-uploaded illustration exactly')
+assert.equal(fileHash('public/logo.png'),originalLogoSHA256,
+  'Legacy logo path must use the same approved illustration')
+for (const path of ['public/icons/icon-192.png','public/icons/icon-512.png','public/og-kingdom-citizens.png','app/icon.png','app/apple-icon.png']) {
+  const bytes = readFileSync(path)
+  assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a',
+    path+' must be a real PNG image')
+}
+assert.equal(readFileSync('app/favicon.ico').subarray(0,4).toString('hex'),'00000100',
+  'Favicon must be an ICO file')
+const appLayout = read('app/layout.tsx')
+assert.ok(appLayout.includes('/og-kingdom-citizens.png'),
+  'Social previews use approved branding')
+const manifest = read('public/manifest.json')
+assert.ok(manifest.includes('"theme_color": "#12090b"'), 'Keep original burgundy palette in PWA')
+
 console.log('PASS Kingdom Citizens UI/auth/static audit contracts.')
