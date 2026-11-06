@@ -12,4 +12,7 @@ for(const path of paths){
 }
 assert.ok(read('app/members/page.tsx').includes('redacts email and phone'),
   'Never restore unrestricted member directory queries')
+assert.ok(read('app/auth/callback/route.ts').includes('safeNextPath('), 'OAuth redirect must be local')
+assert.ok(!read('app/auth/callback/route.ts').includes(".from('profiles').upsert"), 'OAuth must not upsert client-managed roles')
+assert.ok(read('lib/auth/safe-next.ts').includes("value.startsWith('//')"), 'Protocol-relative redirects rejected')
 console.log('PASS: member directory privacy static contracts')
