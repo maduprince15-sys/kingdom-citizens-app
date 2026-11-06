@@ -48,7 +48,7 @@ jobs:
               icon(size).save(f'public/icons/icon-{size}.png',optimize=True)
           icon(512).save('app/icon.png',optimize=True)
           icon(180).save('app/apple-icon.png',optimize=True)
-          icon(64).save('app/favicon.ico',format='ICO',sizes=[(16,16),(32,32),(48,48),(64,64)])
+          icon(64).convert('RGBA').save('app/favicon.ico',format='ICO',sizes=[(16,16),(32,32),(48,48),(64,64)])
           canvas=Image.new('RGB',(1200,630),(9,4,5))
           hero=logo.copy()
           hero.thumbnail((1180,620),Image.Resampling.LANCZOS)
