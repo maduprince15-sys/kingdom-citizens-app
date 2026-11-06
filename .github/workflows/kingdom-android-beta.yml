@@ -1,0 +1,84 @@
+name: Kingdom Citizens Android Beta APK
+
+on:
+  push:
+    branches:
+      - test/kingdom-citizens-android-beta-20261106
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-beta:
+    name: Build isolated Kingdom Citizens Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Android beta
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Configure Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Configure Android Java
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install repository dependencies
+        run: npm ci
+
+      - name: Verify Kingdom Citizens redesign safety contracts
+        run: npm run test:glass-audit
+
+      - name: Generate independent Android beta project
+        run: |
+          cp capacitor.android-beta.config.ts capacitor.config.ts
+          test -s mobile-beta/index.html
+          grep -q 'com.kingdomcitizens.app.beta' capacitor.config.ts
+          # Repo preserves the production AndroidManifest source but not the
+          # complete Android Gradle project. Remove only the ephemeral CI copy.
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+
+      - name: Confirm Android beta identity
+        run: |
+          grep -R 'com.kingdomcitizens.app.beta' android/app/build.gradle
+          grep -R 'Kingdom Citizens Beta' android/app/src/main/res/values/strings.xml
+
+      - name: Install Android SDK 36
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-36' 'build-tools;36.0.0'
+
+      - name: Build Android beta APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Confirm APK package is isolated from production
+        run: |
+          apk='android/app/build/outputs/apk/debug/app-debug.apk'
+          test -s "$apk"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.kingdomcitizens.app.beta'"
+          cp "$apk" Kingdom-Citizens-Beta-debug.apk
+          sha256sum Kingdom-Citizens-Beta-debug.apk > android-beta-sha256.txt
+
+      - name: Upload APK for later owner-led Android testing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Kingdom-Citizens-Android-Beta
+          path: |
+            Kingdom-Citizens-Beta-debug.apk
+            android-beta-sha256.txt
+          if-no-files-found: error
+          retention-days: 14
