@@ -1,0 +1,75 @@
+name: Import approved Kingdom Citizens logo
+on:
+  push:
+    branches:
+      - feature/kingdom-citizens-glass-audit-20261106
+    paths:
+      - .github/workflows/sync-approved-logo.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install-approved-logo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/kingdom-citizens-glass-audit-20261106
+      - name: Fetch exactly the owner-approved original logo
+        env:
+          KC_IMAGE_URL: https://d2ol7oe51mr4n9.cloudfront.net/user_3IdoLRI4x1wFTXx8nAobiaxAsmH/f156fb7e-0c97-4ec3-91c2-73c1286d2cbb.png
+        run: |
+          curl --retry 3 --fail --location --silent --show-error "$KC_IMAGE_URL" --output /tmp/approved-kingdom-citizens-logo.png
+          echo "7c3b11e96fe1374c4f5472428b1a0e5ae9baebf05cf033c0050ec95dec66731c  /tmp/approved-kingdom-citizens-logo.png" | sha256sum --check
+          file /tmp/approved-kingdom-citizens-logo.png
+      - name: Install image support
+        run: python3 -m pip install --quiet --user 'Pillow==11.3.0'
+      - name: Replace every site logo and create PWA icons from original
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import shutil
+          original = Path('/tmp/approved-kingdom-citizens-logo.png')
+          logo = Image.open(original).convert('RGBA')
+          assert logo.size == (1536, 1024), f'Unexpected logo dimensions: {logo.size}'
+          shutil.copyfile(original, 'public/kingdom-citizens-logo.png')
+          shutil.copyfile(original, 'public/logo.png')
+          Path('public/icons').mkdir(parents=True, exist_ok=True)
+          def icon(size):
+              canvas = Image.new('RGBA', (size,size), (9,4,5,255))
+              # Fit all logo elements; no illustration is redrawn or modified.
+              thumb = logo.copy()
+              thumb.thumbnail((size,size),Image.Resampling.LANCZOS)
+              canvas.alpha_composite(thumb,((size-thumb.width)//2,(size-thumb.height)//2))
+              return canvas.convert('RGB')
+          for size in (192,512):
+              icon(size).save(f'public/icons/icon-{size}.png',optimize=True)
+          icon(512).save('app/icon.png',optimize=True)
+          icon(180).save('app/apple-icon.png',optimize=True)
+          icon(64).save('app/favicon.ico',format='ICO',sizes=[(16,16),(32,32),(48,48),(64,64)])
+          canvas=Image.new('RGB',(1200,630),(9,4,5))
+          hero=logo.copy()
+          hero.thumbnail((1180,620),Image.Resampling.LANCZOS)
+          canvas.paste(hero,((1200-hero.width)//2,(630-hero.height)//2),hero)
+          canvas.save('public/og-kingdom-citizens.png',optimize=True)
+          PY
+      - name: Verify changed logo assets
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          for file in ['public/kingdom-citizens-logo.png','public/logo.png','public/icons/icon-192.png','public/icons/icon-512.png','public/og-kingdom-citizens.png','app/icon.png','app/apple-icon.png','app/favicon.ico']:
+              assert Path(file).is_file(), f'Missing {file}'
+              with Image.open(file) as image: image.verify()
+              print(file)
+          PY
+      - name: Commit approved logo into the redesign branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/kingdom-citizens-logo.png public/logo.png public/icons/icon-192.png public/icons/icon-512.png public/og-kingdom-citizens.png app/icon.png app/apple-icon.png app/favicon.ico
+          if git diff --cached --quiet; then echo "All logos already updated"; exit 0; fi
+          git commit -m "Replace old Kingdom Citizens branding with the approved original logo"
+          git push origin HEAD:feature/kingdom-citizens-glass-audit-20261106

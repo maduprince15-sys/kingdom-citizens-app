@@ -48,7 +48,7 @@ export default async function HomePage() {
           </div>
           <div className="kc-glass relative mx-auto flex w-full max-w-sm flex-col items-center rounded-[2rem] px-7 py-10 text-center">
             <div className="pointer-events-none absolute inset-x-16 top-4 h-40 rounded-full bg-[#b27a4c]/15 blur-[58px]" />
-            <img src="/kingdom-citizens-logo.png" alt="The Kingdom Citizens emblem" className="relative h-44 w-44 rounded-full border border-[#dfc48e]/35 object-cover shadow-[0_0_52px_rgba(190,143,78,.15)]" />
+            <img src="/kingdom-citizens-logo.png" alt="The Kingdom Citizens emblem" className="relative aspect-[3/2] w-full max-w-xs object-contain drop-shadow-[0_0_35px_rgba(190,143,78,.20)]" />
             <p className="relative mt-7 text-xs font-semibold uppercase tracking-[.2em] text-[#cfb27e]">Our address is in Christ</p>
             <p className="relative mt-3 text-xl font-medium">One family. One hope.</p>
           </div>

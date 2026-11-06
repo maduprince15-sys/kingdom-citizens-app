@@ -20,7 +20,7 @@ export default function PublicHeader() {
     <header className="sticky top-0 z-50 border-b border-[#c0a06c]/25 bg-[#12090b]/95 px-4 py-3 text-white shadow-lg backdrop-blur-xl md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
         <Link href="/" onClick={() => setOpen(false)} className="flex min-w-0 items-center gap-3">
-          <img src="/kingdom-citizens-logo.png" alt="" className="h-11 w-11 shrink-0 rounded-full border border-[#ccaf7a]/30 object-cover" />
+          <img src="/icons/icon-192.png" alt="" className="h-11 w-11 shrink-0 rounded-full border border-[#ccaf7a]/30 object-cover" />
           <span className="truncate text-base font-semibold tracking-tight text-[#efd9ab] sm:text-lg">The Kingdom Citizens</span>
         </Link>
         <nav aria-label="Public navigation" className="hidden items-center gap-1 lg:flex">

@@ -72,7 +72,7 @@ export default function LoginPage() {
             <img
               src='/kingdom-citizens-logo.png'
               alt='The Kingdom Citizens'
-              className='mx-auto h-16 w-16 rounded-full object-cover'
+              className='mx-auto h-auto w-full max-w-[12rem] object-contain'
             />
 
 
