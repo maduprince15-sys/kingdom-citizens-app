@@ -2,247 +2,97 @@ import Link from 'next/link'
 import PublicHeader from './components/PublicHeader'
 import PublicFooter from './components/PublicFooter'
 import PinnedAnnouncementSlider from './components/PinnedAnnouncementSlider'
-import { createClient } from '../lib/supabase/server'
+import { createClient, supabaseServerConfigured } from '../lib/supabase/server'
 
+const sections = [
+  { href: '/public/posts', title: 'Teachings', detail: 'Scripture and reflections' },
+  { href: '/public/books', title: 'Library', detail: 'Books and study resources' },
+  { href: '/public/meetings', title: 'Gatherings', detail: 'Bible study and fellowship' },
+  { href: '/public/connect', title: 'Connect', detail: 'Official ministry channels' },
+]
 export default async function HomePage() {
-  const supabase = await createClient()
+  let meetings: { title: string; meeting_date: string | null; meeting_time: string | null; platform: string | null }[] | null = null
+  let notices: { id: string; title: string; content: string; image_url: string | null; video_url: string | null; created_at: string }[] | null = null
 
-  const { data: meetings } = await supabase
-    .from('meetings')
-    .select('title, platform, meeting_url, description, meeting_date, meeting_time')
-    .order('meeting_date', { ascending: true })
-    .limit(3)
-
-  const { data: pinnedAnnouncements } = await supabase
-    .from('app_announcements')
-    .select('id, title, content, image_url, video_url, created_at')
-    .eq('is_pinned', true)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  // Public Preview deliberately remains disconnected until a separate test
+  // Supabase project is configured. Never fall back to Production credentials.
+  if (supabaseServerConfigured) {
+    const supabase = await createClient()
+    const [meetingResult, noticeResult] = await Promise.all([
+      supabase.from('meetings').select('title, meeting_date, meeting_time, platform')
+        .order('meeting_date', { ascending: true }).limit(2),
+      supabase.from('app_announcements')
+        .select('id, title, content, image_url, video_url, created_at')
+        .eq('is_pinned', true).order('created_at', { ascending: false }).limit(5),
+    ])
+    meetings = meetingResult.data
+    notices = noticeResult.data
+  }
 
   return (
-    <main className='kc-mobile-shell min-h-screen bg-[#050303] pb-20 text-white md:pb-0'>
+    <main className="kc-site kc-mobile-shell min-h-screen bg-[#050303] text-white">
       <PublicHeader />
-
-      <section className='relative overflow-hidden border-b border-yellow-900/40 bg-gradient-to-br from-[#210808] via-[#0b0505] to-black px-4 py-10 md:px-8 md:py-16'>
-        <div className='absolute inset-0 opacity-20'>
-          <div className='absolute right-10 top-20 h-72 w-72 rounded-full bg-yellow-500 blur-[120px]' />
-          <div className='absolute bottom-0 left-10 h-72 w-72 rounded-full bg-red-800 blur-[140px]' />
-        </div>
-
-        <div className='relative mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center'>
-          <div>
-            <div className='inline-flex rounded-full border border-yellow-700/60 bg-black/30 px-4 py-2 text-xs font-semibold text-yellow-300 md:text-sm'>
-              Christ-centered teaching and spiritual formation community
-            </div>
-
-            <h1 className='mt-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-7xl'>
-              The Kingdom <br />
-              Citizens
+      <section className="relative isolate overflow-hidden border-b border-[#b68a53]/20 px-4 py-14 sm:py-20 md:px-8">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_77%_28%,rgba(142,45,54,.23),transparent_40%),radial-gradient(circle_at_14%_84%,rgba(157,118,58,.12),transparent_45%)]" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_.9fr]">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[.22em] text-[#d5b476]">A Christ-centered community</p>
+            <h1 className="mt-5 text-4xl font-semibold leading-[1.12] tracking-[-.04em] text-white sm:text-6xl">
+              The Kingdom<br /><span className="text-[#e6cd9a]">Citizens</span>
             </h1>
-
-            <p className='mt-5 max-w-2xl text-base leading-8 text-gray-200 md:text-lg'>
-              A community of heavenly citizens under mission on the earth, growing in
-              Christ, in the Word, in prayer, and in spiritual formation.
-            </p>
-
-            <div className='kc-mobile-actions mt-8'>
-              <Link
-                href='/public/posts'
-                className='rounded-full border border-yellow-700/70 px-6 py-3 text-center text-sm font-bold text-yellow-300 hover:bg-yellow-900/20'
-              >
-                Explore Posts
-              </Link>
-            </div>
-
-            <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3'>
-              {meetings && meetings.length > 0 ? (
-                meetings.map((meeting) => (
-                  <div
-                    key={`${meeting.title}-${meeting.meeting_date}-${meeting.meeting_time}`}
-                    className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'
-                  >
-                    <p className='text-sm font-bold text-yellow-300'>
-                      {meeting.meeting_date || 'Scheduled'}
-                    </p>
-
-                    <h3 className='mt-2 text-lg font-bold'>
-                      {meeting.title}
-                    </h3>
-
-                    <p className='text-sm text-gray-300'>
-                      {meeting.meeting_time || 'Time to be announced'}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <>
-                  <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
-                    <p className='text-sm font-bold text-yellow-300'>Thursday</p>
-                    <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
-                    <p className='text-sm text-gray-300'>8:00 PM</p>
-                  </div>
-
-                  <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
-                    <p className='text-sm font-bold text-yellow-300'>Sunday</p>
-                    <h3 className='mt-2 text-lg font-bold'>Service</h3>
-                    <p className='text-sm text-gray-300'>7:00 PM</p>
-                  </div>
-
-                  <div className='rounded-2xl border border-yellow-900/30 bg-black/30 p-5'>
-                    <p className='text-sm font-bold text-yellow-300'>Daily</p>
-                    <h3 className='mt-2 text-lg font-bold'>Bible Study</h3>
-                    <p className='text-sm text-gray-300'>Individual study possible</p>
-                  </div>
-                </>
-              )}
+            <p className="mt-6 max-w-lg text-base leading-8 text-[#dfd3cf]">Already seated in heaven, walking here on earth. Growing together in Christ through Scripture, prayer and fellowship.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/register" className="rounded-full bg-[#c7a366] px-6 py-3 text-sm font-bold text-[#1a0a0c] hover:bg-[#e2c48a]">Join the community</Link>
+              <Link href="/public/posts" className="rounded-full border border-[#d8bb83]/35 bg-white/[.04] px-6 py-3 text-sm font-semibold text-[#f1d8a7]">Explore teachings</Link>
             </div>
           </div>
-
-          <div className='rounded-[2rem] border border-yellow-900/40 bg-gradient-to-br from-yellow-100 to-white p-5 text-black shadow-2xl shadow-black/40'>
-            <div className='rounded-[1.5rem] bg-[#120707] p-5 text-white'>
-              <div className='flex items-center gap-4'>
-                <img
-                  src='/kingdom-citizens-logo.png'
-                  alt='The Kingdom Citizens'
-                  className='h-16 w-16 rounded-full object-cover'
-                />
-
-                <div>
-                  <p className='text-xs uppercase tracking-[0.3em] text-yellow-400'>
-                    The Kingdom Citizens
-                  </p>
-
-                  <h2 className='mt-1 text-2xl font-bold'>
-                    {pinnedAnnouncements && pinnedAnnouncements.length > 0
-                      ? 'Pinned Notice'
-                      : 'Today'}
-                  </h2>
-                </div>
+          <div className="kc-glass relative mx-auto flex w-full max-w-sm flex-col items-center rounded-[2rem] px-7 py-10 text-center">
+            <div className="pointer-events-none absolute inset-x-16 top-4 h-40 rounded-full bg-[#b27a4c]/15 blur-[58px]" />
+            <img src="/kingdom-citizens-logo.png" alt="The Kingdom Citizens emblem" className="relative aspect-[3/2] w-full max-w-xs object-contain drop-shadow-[0_0_35px_rgba(190,143,78,.20)]" />
+            <p className="relative mt-7 text-xs font-semibold uppercase tracking-[.2em] text-[#cfb27e]">Our address is in Christ</p>
+            <p className="relative mt-3 text-xl font-medium">One family. One hope.</p>
+          </div>
+        </div>
+      </section>
+      <section className="mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-14">
+        <div className="mb-6 flex items-end justify-between gap-3">
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Explore our community</h2>
+          <Link href="/login" className="text-sm font-semibold text-[#e2c28e]">Member area</Link>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {sections.map((item) => (
+            <Link key={item.href} href={item.href} className="kc-glass group rounded-2xl px-5 py-6 transition hover:border-[#d8b57c]/60">
+              <h3 className="text-lg font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm text-[#bdb0ab]">{item.detail}</p>
+              <span className="mt-6 block text-sm font-semibold text-[#d6b77f]">Explore →</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+      {(notices?.length || meetings?.length) ? (
+        <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-14 md:grid-cols-2 md:px-8">
+          {notices && notices.length > 0 && (
+            <div className="kc-glass min-w-0 rounded-[1.75rem] p-5">
+              <h2 className="mb-3 text-lg font-semibold text-[#f0dfbd]">Community notices</h2>
+              <PinnedAnnouncementSlider announcements={notices} intervalMs={15000} />
+            </div>
+          )}
+          {meetings && meetings.length > 0 && (
+            <div className="kc-glass rounded-[1.75rem] p-6">
+              <h2 className="text-lg font-semibold text-[#f0dfbd]">Upcoming gatherings</h2>
+              <div className="mt-4 space-y-3">
+                {meetings.map((item, index) => (
+                  <div key={item.title + '-' + index} className="flex items-start justify-between gap-4 rounded-xl border border-[#c6a26b]/15 bg-[#1b0c0e]/60 p-4">
+                    <div><p className="font-semibold">{item.title}</p><p className="mt-1 text-xs text-[#bfb1ac]">{item.platform || 'Community gathering'}</p></div>
+                    <p className="shrink-0 text-right text-xs text-[#e2c48c]">{item.meeting_date || 'Date to be announced'}{item.meeting_time ? ' · ' + item.meeting_time : ''}</p>
+                  </div>
+                ))}
               </div>
-
-              {pinnedAnnouncements && pinnedAnnouncements.length > 0 ? (
-                <PinnedAnnouncementSlider
-                  announcements={pinnedAnnouncements}
-                  intervalMs={15000}
-                />
-              ) : (
-                <>
-                  <div className='mt-6 rounded-2xl bg-[#7c2630] p-5'>
-                    <p className='text-xs uppercase tracking-[0.25em] text-yellow-200'>
-                      Welcome
-                    </p>
-                    <p className='mt-3 text-lg font-bold'>
-                      Growing together in Christ and in the Word.
-                    </p>
-                  </div>
-
-                  <div className='mt-5 grid grid-cols-2 gap-4'>
-                    <div className='rounded-2xl bg-white/90 p-4 text-black'>
-                      <p className='text-xs text-gray-500'>Schedule</p>
-                      <p className='mt-2 font-bold'>
-                        {meetings?.[0]?.title || 'Thursday'}
-                      </p>
-                      <p className='text-sm'>
-                        {meetings?.[0]?.meeting_time || 'Bible Study · 8:00 PM'}
-                      </p>
-                    </div>
-
-                    <div className='rounded-2xl bg-white/90 p-4 text-black'>
-                      <p className='text-xs text-gray-500'>Prayer</p>
-                      <p className='mt-2 font-bold'>Stand Together</p>
-                      <p className='text-sm'>Prayer Wall</p>
-                    </div>
-                  </div>
-
-                  <div className='mt-5 rounded-2xl border border-yellow-900/40 bg-black/40 p-4'>
-                    <p className='text-xs uppercase tracking-[0.25em] text-yellow-400'>
-                      Meditation Scripture
-                    </p>
-                    <p className='mt-3 text-sm leading-6 text-gray-300'>
-                      “He humbled you, caused you to hunger, and fed you with manna...”
-                    </p>
-                    <p className='mt-2 text-xs text-gray-500'>Deuteronomy 8:3</p>
-                  </div>
-                </>
-              )}
+              <Link href="/public/meetings" className="mt-4 inline-block text-sm font-semibold text-[#ddbf87]">All meetings →</Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className='mx-auto max-w-6xl px-4 py-10 md:px-8'>
-        <div className='mb-6'>
-          <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
-            Community Life
-          </p>
-          <h2 className='mt-2 text-3xl font-bold md:text-4xl'>
-            Enter the Kingdom Citizens platform
-          </h2>
-          <p className='mt-3 max-w-3xl text-sm leading-7 text-gray-300'>
-            Access teachings, books, meetings, prayer, giving, and member tools.
-          </p>
-        </div>
-
-        <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-          <Link href='/public/posts' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Teaching</p>
-            <h3 className='mt-3 text-2xl font-bold'>Posts</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>Read teaching posts, meditations, and community writings.</p>
-          </Link>
-
-          <Link href='/public/books' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Bookstore</p>
-            <h3 className='mt-3 text-2xl font-bold'>Books</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>Explore Kingdom Citizens books and teaching resources.</p>
-          </Link>
-
-          <Link href='/public/connect' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Channels</p>
-            <h3 className='mt-3 text-2xl font-bold'>Connect</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>Visit official media channels and public links.</p>
-          </Link>
-
-          <Link href='/public/meetings' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Gatherings</p>
-            <h3 className='mt-3 text-2xl font-bold'>Meetings</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>Join services, Bible studies, and live fellowship meetings.</p>
-          </Link>
-
-          <Link href='/public/giving' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Giving</p>
-            <h3 className='mt-3 text-2xl font-bold'>Eternal Wealth</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>
-              Make for yourselves eternal wealth with unrighteous mammon, and store your treasure where decay cannot destroy.
-            </p>
-          </Link>
-
-          <Link href='/login' className='rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-black p-6 shadow-lg shadow-black/30 hover:border-yellow-600'>
-            <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>Member Access</p>
-            <h3 className='mt-3 text-2xl font-bold'>Login</h3>
-            <p className='mt-3 text-sm leading-6 text-gray-300'>Enter the member dashboard and community tools.</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className='mx-auto max-w-6xl px-4 pb-12 md:px-8'>
-        <div className='rounded-3xl border border-yellow-900/40 bg-[#120707] p-6 md:p-8'>
-          <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
-            Identity
-          </p>
-
-          <h2 className='mt-3 text-3xl font-bold'>
-            Our address is in Christ.
-          </h2>
-
-          <p className='mt-4 max-w-3xl text-sm leading-7 text-gray-300 md:text-base'>
-            The Kingdom Citizens exists as a Christ-centered community for teaching,
-            prayer, formation, and Kingdom expression. We grow together under the Word,
-            in fellowship, and in the life of Christ.
-          </p>
-        </div>
-      </section>
-
+          )}
+        </section>
+      ) : null}
       <PublicFooter />
     </main>
   )

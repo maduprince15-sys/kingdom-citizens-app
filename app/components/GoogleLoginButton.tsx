@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { createClient } from '../../lib/supabase/client'
+import { createClient, supabaseConfigured } from '../../lib/supabase/client'
 import { startAndroidGoogleOAuth } from '../../lib/android-google-auth'
 import { isAndroidNativeApp } from '../../lib/mobile-runtime'
 
@@ -64,7 +64,7 @@ export default function GoogleLoginButton() {
       <button
         type='button'
         onClick={handleGoogleLogin}
-        disabled={loading}
+        disabled={loading || !supabaseConfigured}
         className='w-full rounded border border-gray-300 bg-white p-3 font-semibold text-black hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60'
       >
         {loading ? 'Opening Google...' : 'Continue with Google'}

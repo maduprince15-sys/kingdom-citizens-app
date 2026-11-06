@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     ],
     apple: '/icons/icon-192.png',
   },
+  openGraph: {
+    title: 'The Kingdom Citizens',
+    images: [{ url: '/og-kingdom-citizens.png', width: 1200, height: 630 }],
+  },
+  twitter: { card: 'summary_large_image', images: ['/og-kingdom-citizens.png'] },
   appleWebApp: {
     capable: true,
     title: 'Kingdom Citizens',
@@ -35,7 +40,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#030711',
+  themeColor: '#12090b',
 }
 
 export default function RootLayout({

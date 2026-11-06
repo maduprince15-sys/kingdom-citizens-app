@@ -35,8 +35,7 @@ export default async function NewMessagePage({ searchParams }: Props) {
   const canBroadcast = canBroadcastMessages(role)
 
   const query = supabase
-    .from('profiles')
-    .select('id, full_name, email, role')
+.rpc('member_directory')
     .neq('id', user.id)
     .order('created_at', { ascending: false })
 

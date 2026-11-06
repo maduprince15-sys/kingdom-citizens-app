@@ -1,122 +1,49 @@
 'use client'
-
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+const navigation = [
+  { href: '/', label: 'Home' },
+  { href: '/public/posts', label: 'Teachings' },
+  { href: '/public/meetings', label: 'Meetings' },
+  { href: '/public/books', label: 'Books' },
+]
 export default function PublicHeader() {
   const [open, setOpen] = useState(false)
-
+  useEffect(() => {
+    if (!open) return
+    const handler = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open])
   return (
-    <>
-      <header className='sticky top-0 z-50 border-b border-yellow-900/40 bg-[#120505]/95 px-4 py-4 text-white backdrop-blur md:px-8'>
-        <div className='mx-auto flex max-w-6xl items-center justify-between gap-3'>
-          <Link href='/' className='flex min-w-0 items-center gap-3 md:gap-4'>
-            <img
-              src='/kingdom-citizens-logo.png'
-              alt='The Kingdom Citizens'
-              className='h-16 w-16 rounded-full object-cover md:h-20 md:w-20'
-            />
-
-            <div className='min-w-0'>
-              <h1 className='truncate text-lg font-bold leading-tight text-yellow-400 sm:text-xl md:text-2xl'>
-                The Kingdom Citizens
-              </h1>
-              <p className='truncate text-xs text-gray-300 md:text-sm'>
-                Our address is in Christ
-              </p>
-            </div>
-          </Link>
-
-          <button
-            onClick={() => setOpen(!open)}
-            className='shrink-0 rounded-lg border border-yellow-800/60 px-4 py-2 text-2xl leading-none text-yellow-400 hover:bg-yellow-900/20'
-            aria-label='Open menu'
-          >
-            ☰
-          </button>
-        </div>
-
-        {open && (
-          <nav className='mx-auto mt-4 max-h-[65vh] max-w-6xl overflow-y-auto rounded-2xl border border-yellow-900/40 bg-black/90 p-4 pb-28'>
-            <div className='grid grid-cols-1 gap-3 text-sm md:grid-cols-3'>
-              <Link href='/' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Home
-              </Link>
-
-              <Link href='/public/announcements' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Announcements
-              </Link>
-<Link href='/study' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-  Study Center
-</Link>
-
-              <Link href='/public/posts' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Posts
-              </Link>
-
-              <Link href='/public/giving' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Giving
-              </Link>
-
-              <Link href='/public/books' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Books
-              </Link>
-
-<Link href='/public/contact' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-  Contact
-</Link>
-              <Link href='/public/connect' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Connect
-              </Link>
-
-              <Link href='/public/meetings' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Meetings
-              </Link>
-
-              <Link href='/prayers' className='rounded-lg p-3 hover:bg-yellow-900/20'>
-                Prayer Wall
-              </Link>
-
-              <Link href='/dashboard' className='rounded-lg bg-yellow-500 p-3 font-bold text-black hover:bg-yellow-400'>
-                Dashboard
-              </Link>
-
-              <Link href='/login' className='rounded-lg border border-yellow-800 p-3 text-yellow-300 hover:bg-yellow-900/20'>
-                Login
-              </Link>
-            </div>
-          </nav>
-        )}
-      </header>
-
-      <nav className='fixed bottom-0 left-0 right-0 z-50 border-t border-yellow-900/40 bg-black/95 px-2 py-2 text-white md:hidden'>
-        <div className='grid grid-cols-5 text-center text-[11px]'>
-          <Link href='/' className='flex flex-col items-center gap-1 text-yellow-400'>
-            <span className='text-lg'>⌂</span>
-            <span>Home</span>
-          </Link>
-
-          <Link href='/public/announcements' className='flex flex-col items-center gap-1 text-gray-300'>
-            <span className='text-lg'>📢</span>
-            <span>News</span>
-          </Link>
-
-          <Link href='/public/posts' className='flex flex-col items-center gap-1 text-gray-300'>
-            <span className='text-lg'>✍</span>
-            <span>Posts</span>
-          </Link>
-
-          <Link href='/public/meetings' className='flex flex-col items-center gap-1 text-gray-300'>
-            <span className='text-lg'>📅</span>
-            <span>Meet</span>
-          </Link>
-
-          <Link href='/dashboard' className='flex flex-col items-center gap-1 text-gray-300'>
-            <span className='text-lg'>☰</span>
-            <span>App</span>
-          </Link>
-        </div>
-      </nav>
-    </>
+    <header className="sticky top-0 z-50 border-b border-[#c0a06c]/25 bg-[#12090b]/95 px-4 py-3 text-white shadow-lg backdrop-blur-xl md:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+        <Link href="/" onClick={() => setOpen(false)} className="flex min-w-0 items-center gap-3">
+          <img src="/icons/icon-192.png" alt="" className="h-11 w-11 shrink-0 rounded-full border border-[#ccaf7a]/30 object-cover" />
+          <span className="truncate text-base font-semibold tracking-tight text-[#efd9ab] sm:text-lg">The Kingdom Citizens</span>
+        </Link>
+        <nav aria-label="Public navigation" className="hidden items-center gap-1 lg:flex">
+          {navigation.map((link) => <Link key={link.href} href={link.href} className="rounded-xl px-4 py-2 text-sm text-[#dfd1cf] hover:bg-white/[.08]">{link.label}</Link>)}
+          <Link href="/login" className="ml-2 rounded-full border border-[#cfaa72]/45 bg-[#b28d53]/15 px-5 py-2 text-sm font-semibold text-[#edd2a1]">Member sign in</Link>
+        </nav>
+        <button type="button" onClick={() => setOpen((value) => !value)} aria-controls="kc-public-menu" aria-expanded={open}
+          aria-label={open ? 'Close navigation' : 'Open navigation'}
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#bda06b]/40 bg-[#2b151a] text-xl text-[#f1dba9] lg:hidden">
+          {open ? '×' : '☰'}
+        </button>
+      </div>
+      {open && (
+        <nav id="kc-public-menu" aria-label="Mobile navigation" className="mx-auto mt-3 max-w-6xl rounded-2xl border border-[#c6a46f]/25 bg-[#180c0f] p-2 shadow-xl lg:hidden">
+          {navigation.map((link) => <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-semibold text-[#f0e2dd] hover:bg-[#4b2830]">{link.label}</Link>)}
+          <Link href="/public/announcements" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm text-[#e2d3ce]">Announcements</Link>
+          <Link href="/public/contact" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm text-[#e2d3ce]">Contact</Link>
+          <div className="mt-2 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+            <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl border border-[#cfaa72]/35 p-3 text-center text-sm font-semibold text-[#f1d5a4]">Sign in</Link>
+            <Link href="/register" onClick={() => setOpen(false)} className="rounded-xl bg-[#caa76a] p-3 text-center text-sm font-semibold text-[#180d0d]">Join</Link>
+          </div>
+        </nav>
+      )}
+    </header>
   )
 }

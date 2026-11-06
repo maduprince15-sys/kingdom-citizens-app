@@ -74,8 +74,7 @@ export default async function DashboardPage() {
   const currentDay = today.getDate()
 
   const { data: birthdayProfiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, birthday_month, birthday_day, show_birthday, avatar_url')
+.rpc('member_directory')
     .eq('show_birthday', true)
     .eq('birthday_month', currentMonth)
     .eq('birthday_day', currentDay)
@@ -439,190 +438,85 @@ export default async function DashboardPage() {
         ? 'Finance tools are for Giving portal management and future financial records.'
         : 'These controls are for assigned leadership and should be used carefully.'
 
+
+  const mainHrefs = new Set(['/study', '/meetings', '/messages', '/notifications', '/prayers', '/books'])
+  const primaryCards = memberCards.filter((card) => mainHrefs.has(card.href))
+  const secondaryCards = memberCards.filter((card) => !mainHrefs.has(card.href))
+
   return (
-    <main className='kc-mobile-shell min-h-screen bg-[#050303] pb-28 text-white md:pb-10'>
-      <section className='border-b border-yellow-900/40 bg-gradient-to-br from-black via-[#130606] to-[#260909] px-4 py-8 md:px-8'>
-        <div className='mx-auto max-w-6xl'>
-          <p className='text-xs uppercase tracking-[0.35em] text-yellow-500'>
-            The Kingdom Citizens
-          </p>
-
-          <div className='mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
-            <div>
-              <h1 className='text-3xl font-bold md:text-5xl'>
-                Dashboard
-              </h1>
-
-              <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base'>
-                Welcome, {displayName}. This is your Kingdom Citizens control center.
-              </p>
-
-              <div className='mt-4 flex flex-wrap gap-3 text-sm'>
-                <span className='rounded-full border border-yellow-800 px-3 py-1 text-yellow-300'>
-                  Role: {role}
-                </span>
-
-                <span className='break-all rounded-full border border-yellow-800 px-3 py-1 text-gray-300'>
-                  {user.email}
-                </span>
-              </div>
-            </div>
-
-            <div className='kc-mobile-actions'>
-              <Link
-                href='/notifications'
-                className='relative rounded-full border border-yellow-700/70 px-4 py-2 text-center text-sm font-bold text-yellow-300 hover:bg-yellow-700/20'
-              >
-                🔔 Notifications
-                {unreadNotificationCount ? (
-                  <span className='ml-2 rounded-full bg-yellow-500 px-2 py-0.5 text-xs font-black text-black'>
-                    {unreadNotificationCount}
-                  </span>
-                ) : null}
-              </Link>
-
-              <Link
-                href='/'
-                className='rounded-full border border-yellow-700/70 px-4 py-2 text-center text-sm text-yellow-300 hover:bg-yellow-700/20'
-              >
-                View Public Site
-              </Link>
-            </div>
+    <main className="kc-site kc-mobile-shell min-h-screen bg-[#050303] pb-14 text-white">
+      <header className="border-b border-[#c5a56d]/20 bg-gradient-to-br from-[#1e0b0f] to-[#080405] px-4 py-6 md:px-8 md:py-9">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#c5a46c]">The Kingdom Citizens</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Welcome, {displayName}</h1>
+            <p className="mt-1 text-xs capitalize text-[#bdb0ab]">{role} account</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/notifications" className="rounded-full border border-[#c7a16a]/30 bg-[#48252b]/45 px-4 py-2.5 text-sm font-semibold text-[#f1d7a5]">
+              Notifications{unreadNotificationCount ? ' · ' + unreadNotificationCount : ''}
+            </Link>
+            <Link href="/" className="rounded-full border border-white/15 px-4 py-2.5 text-sm text-[#e8d9d4]">Public site</Link>
           </div>
         </div>
-      </section>
-
-      <section className='mx-auto max-w-6xl px-4 py-8 md:px-8'>
+      </header>
+      <section className="mx-auto max-w-6xl space-y-7 px-4 py-8 md:px-8">
         <PushNotificationManager />
-
-        <DashboardNoticePreview slides={noticeSlides} intervalMs={12000} />
-
-        {unreadNotificationCount ? (
-          <Link
-            href='/notifications'
-            className='mb-8 block rounded-2xl border border-yellow-600/60 bg-yellow-500 p-5 text-black shadow-lg shadow-yellow-950/40 transition hover:bg-yellow-400'
-          >
-            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-              <div>
-                <p className='text-xs font-black uppercase tracking-[0.25em]'>
-                  New Notifications
-                </p>
-
-                <h2 className='mt-2 text-2xl font-black'>
-                  You have {unreadNotificationCount} unread notification
-                  {unreadNotificationCount === 1 ? '' : 's'}.
-                </h2>
-
-                <p className='mt-2 text-sm font-semibold'>
-                  Open your notification center to view recent messages, reminders, and Citizens updates.
-                </p>
-              </div>
-
-              <div className='rounded-full bg-black px-5 py-3 text-center text-sm font-black text-yellow-300'>
-                Open Notifications →
-              </div>
-            </div>
-          </Link>
-        ) : null}
-
-        <div className='mb-6 rounded-2xl border border-yellow-900/40 bg-[#120707] p-5 md:p-6'>
-          <h2 className='text-xl font-bold text-yellow-300'>
-            Member Tools
-          </h2>
-
-          <p className='mt-2 text-sm leading-6 text-gray-300'>
-            General tools available for your Kingdom Citizens account.
-          </p>
+        {noticeSlides.length > 0 && (
+          <div className="kc-glass rounded-[1.75rem] p-3 sm:p-5">
+            <DashboardNoticePreview slides={noticeSlides} intervalMs={12000} />
+          </div>
+        )}
+        <div>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold">Your community</h2>
+            {unreadMessageCount ? <Link href="/messages" className="text-xs font-semibold text-[#e2c28e]">{unreadMessageCount} unread messages</Link> : null}
+          </div>
+          <div className="kc-dashboard-grid">
+            {primaryCards.map((card) => (
+              <Link key={card.href} href={card.href}
+                className="kc-glass kc-mobile-card group rounded-2xl px-5 py-5 transition hover:border-[#d4b47d]/55 hover:bg-[#4b292f]">
+                <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#be9e6c]">{card.label}</p>
+                <h3 className="mt-2 text-lg font-semibold">{card.title}</h3>
+                <span className="mt-4 block text-xs font-semibold text-[#dcc092] group-hover:text-white">Open →</span>
+              </Link>
+            ))}
+          </div>
         </div>
-
-        <div className='kc-dashboard-grid'>
-          {memberCards.map((card) => (
-            <Link
-              key={card.href}
-              href={card.href}
-              className='kc-mobile-card group rounded-2xl border border-yellow-900/30 bg-gradient-to-br from-[#120707] to-[#050303] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-yellow-600/70'
-            >
-              <p className='text-xs uppercase tracking-[0.25em] text-yellow-500'>
-                {card.label}
-              </p>
-
-              <h2 className='mt-3 text-2xl font-bold text-white'>
-                {card.title}
-              </h2>
-
-              <p className='mt-3 text-sm leading-6 text-gray-300'>
-                {card.description}
-              </p>
-
-              <p className='mt-5 text-sm font-semibold text-yellow-400 group-hover:text-yellow-300'>
-                Open →
-              </p>
-            </Link>
-          ))}
-        </div>
-
-        {managementCards.length > 0 && (
-          <>
-            <div className='my-10 border-t border-yellow-900/40' />
-
-            <div className='mb-6 rounded-2xl border border-red-900/40 bg-[#160707] p-5 md:p-6'>
-              <h2 className='text-xl font-bold text-red-300'>
-                {managementTitle}
-              </h2>
-
-              <p className='mt-2 text-sm leading-6 text-gray-300'>
-                {managementDescription}
-              </p>
-            </div>
-
-            <div className='kc-dashboard-grid'>
-              {managementCards.map((card) => (
-                <Link
-                  key={card.href}
-                  href={card.href}
-                  className='kc-mobile-card group rounded-2xl border border-red-900/40 bg-gradient-to-br from-[#180707] to-[#050303] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-red-500/70'
-                >
-                  <p className='text-xs uppercase tracking-[0.25em] text-red-400'>
-                    {card.label}
-                  </p>
-
-                  <h2 className='mt-3 text-2xl font-bold text-white'>
-                    {card.title}
-                  </h2>
-
-                  <p className='mt-3 text-sm leading-6 text-gray-300'>
-                    {card.description}
-                  </p>
-
-                  <p className='mt-5 text-sm font-semibold text-red-300 group-hover:text-red-200'>
-                    Manage →
-                  </p>
+        {secondaryCards.length > 0 && (
+          <details className="kc-glass rounded-[1.75rem] p-5">
+            <summary className="cursor-pointer text-lg font-semibold text-[#ecd3b4]">More member tools</summary>
+            <div className="kc-dashboard-grid mt-5">
+              {secondaryCards.map((card) => (
+                <Link key={card.href} href={card.href} className="rounded-xl border border-[#c2a06a]/18 bg-[#210e12]/70 px-4 py-4 hover:border-[#d6b77c]/55">
+                  <p className="text-sm font-semibold">{card.title}</p>
+                  <p className="mt-2 text-xs text-[#c4a878]">{card.label} →</p>
                 </Link>
               ))}
             </div>
-          </>
+          </details>
         )}
-
-        <div className='mt-10 rounded-2xl border border-red-900/40 bg-[#120707] p-5'>
-          <h2 className='text-xl font-bold text-red-300'>
-            Account Controls
-          </h2>
-
-          <p className='mt-2 text-sm leading-6 text-gray-400'>
-            Use these controls carefully. Account deletion cannot be undone.
-          </p>
-
-          <div className='kc-mobile-actions mt-5'>
+        {managementCards.length > 0 && (
+          <details className="kc-glass rounded-[1.75rem] p-5">
+            <summary className="cursor-pointer text-lg font-semibold text-[#ecd3b4]">{managementTitle}</summary>
+            <p className="mt-2 text-xs text-[#b8a9a5]">{managementDescription}</p>
+            <div className="kc-dashboard-grid mt-5">
+              {managementCards.map((card) => (
+                <Link key={card.href} href={card.href} className="rounded-xl border border-[#c2a06a]/18 bg-[#210e12]/70 px-4 py-4 hover:border-[#d6b77c]/55">
+                  <p className="text-sm font-semibold">{card.title}</p>
+                  <p className="mt-2 text-xs text-[#c4a878]">{card.label} →</p>
+                </Link>
+              ))}
+            </div>
+          </details>
+        )}
+        <details className="rounded-2xl border border-[#c1a068]/15 bg-[#160a0d]/60 p-5">
+          <summary className="cursor-pointer text-sm font-semibold text-[#d7c5ad]">Account options</summary>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <LogoutButton />
-
-            <Link
-              href='/account/delete'
-              className='rounded-full border border-red-700 px-5 py-3 text-center text-sm font-bold text-red-300 hover:bg-red-900/20'
-            >
-              Delete Account
-            </Link>
+            <Link href="/account/delete" className="rounded-full border border-red-700/40 px-5 py-3 text-sm font-semibold text-red-200 hover:bg-red-950/30">Delete account</Link>
           </div>
-        </div>
+        </details>
       </section>
     </main>
   )
