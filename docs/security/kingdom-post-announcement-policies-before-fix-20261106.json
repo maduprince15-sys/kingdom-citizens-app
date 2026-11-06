@@ -1,0 +1,151 @@
+{
+  "created_at_utc": "2026-11-06",
+  "project_ref": "jngbhejfqbyjletfknkh",
+  "kind": "post and announcement RLS policy metadata before archiving protections",
+  "policies": [
+    {
+      "tablename": "app_announcements",
+      "policyname": "allowed roles create announcements",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'teacher'::text, 'moderator'::text])))))"
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "allowed roles delete announcements",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'moderator'::text])))))",
+      "with_check": null
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "allowed roles update announcements",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'teacher'::text, 'moderator'::text])))))",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'teacher'::text, 'moderator'::text])))))"
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "delete announcements",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "((author_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'moderator'::text]))))))",
+      "with_check": null
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "insert announcements",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'teacher'::text, 'moderator'::text])))))"
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "public can view announcements",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "public read announcements",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "read announcements",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "tablename": "app_announcements",
+      "policyname": "update announcements",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "((author_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'moderator'::text]))))))",
+      "with_check": "((author_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'moderator'::text]))))))"
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "allowed roles create posts",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'teacher'::text, 'moderator'::text])))))"
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "allowed roles delete posts",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'moderator'::text])))))",
+      "with_check": null
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "allowed roles update posts",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'teacher'::text, 'moderator'::text])))))",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'teacher'::text, 'moderator'::text])))))"
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "delete posts",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "((author_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'moderator'::text]))))))",
+      "with_check": null
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "insert posts",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'teacher'::text, 'moderator'::text])))))"
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "public can view posts",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "public read posts",
+      "roles": "{anon,authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "read posts",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "tablename": "app_posts",
+      "policyname": "update posts",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "((author_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'moderator'::text]))))))",
+      "with_check": "((author_id = auth.uid()) OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['owner'::text, 'moderator'::text]))))))"
+    }
+  ]
+}
