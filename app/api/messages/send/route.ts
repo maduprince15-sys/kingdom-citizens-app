@@ -60,8 +60,7 @@ export async function POST(request: Request) {
     }
 
     const { data: recipients, error: recipientsError } = await supabase
-      .from('profiles')
-      .select('id')
+.rpc('member_directory')
       .neq('id', user.id)
 
     if (recipientsError) {
@@ -69,7 +68,7 @@ export async function POST(request: Request) {
     }
 
     const rows =
-      recipients?.map((recipient) => ({
+      recipients?.map((recipient: { id: string }) => ({
         sender_id: user.id,
         sender_name: senderName,
         recipient_id: recipient.id,
@@ -91,7 +90,7 @@ export async function POST(request: Request) {
     }
 
     const notificationRows =
-      recipients?.map((recipient) => ({
+      recipients?.map((recipient: { id: string }) => ({
         user_id: recipient.id,
         title: 'New Broadcast Message',
         message: 'New encrypted message',
@@ -106,15 +105,14 @@ export async function POST(request: Request) {
 
     await sendPrivateMessagePush(
       admin,
-      recipients?.map((recipient) => recipient.id) || []
+      recipients?.map((recipient: { id: string }) => recipient.id) || []
     )
 
     return NextResponse.json({ success: true })
   }
 
   const { data: recipientProfile, error: recipientError } = await supabase
-    .from('profiles')
-    .select('role')
+.rpc('member_directory')
     .eq('id', recipientId)
     .single()
 
