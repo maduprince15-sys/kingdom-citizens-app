@@ -120,7 +120,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Recipient not found.' }, { status: 404 })
   }
 
-  const recipientRole = recipientProfile.role || 'member'
+  const recipientRole = (recipientProfile as { role?: string }).role || 'member'
 
   if (!senderIsOwnerOrAdmin && !canReceiveMemberMessages(recipientRole)) {
     return NextResponse.json(
