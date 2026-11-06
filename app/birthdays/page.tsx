@@ -59,7 +59,7 @@ export default async function BirthdaysPage() {
     .not('birthday_month', 'is', null)
     .not('birthday_day', 'is', null)
 
-  const visibleBirthdays = (birthdays || []).sort(
+  const visibleBirthdays = ((birthdays || []) as BirthdayProfile[]).sort(
     (a, b) => getBirthdaySortValue(a) - getBirthdaySortValue(b)
   )
 

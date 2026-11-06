@@ -27,9 +27,18 @@ export default async function MembersPage() {
   const showRoleControls = canManageRoles(actorRole)
   const showDeleteControls = canDeleteUsers(actorRole)
 
-  const { data: members, error } = await supabase
+  const { data: memberRows, error } = await supabase
 .rpc('member_directory')
     .order('created_at', { ascending: false })
+
+  const members = (memberRows || []) as Array<{
+    id: string
+    full_name: string | null
+    email: string | null
+    phone: string | null
+    role: string | null
+    created_at: string | null
+  }>
 
   const totalMembers = members?.length ?? 0
   const owners = members?.filter((member) => member.role === 'owner').length ?? 0

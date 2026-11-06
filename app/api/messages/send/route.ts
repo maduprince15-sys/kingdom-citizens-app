@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     const rows =
-      recipients?.map((recipient) => ({
+      recipients?.map((recipient: { id: string }) => ({
         sender_id: user.id,
         sender_name: senderName,
         recipient_id: recipient.id,
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     }
 
     const notificationRows =
-      recipients?.map((recipient) => ({
+      recipients?.map((recipient: { id: string }) => ({
         user_id: recipient.id,
         title: 'New Broadcast Message',
         message: 'New encrypted message',
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       if (notificationRows.length > 0) {
         await admin.from('notifications').insert(notificationRows)
       }
-      await sendPrivateMessagePush(admin, recipients?.map((recipient) => recipient.id) || [])
+      await sendPrivateMessagePush(admin, recipients?.map((recipient: { id: string }) => recipient.id) || [])
     }
 
     return NextResponse.json({ success: true })
