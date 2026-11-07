@@ -68,3 +68,14 @@ for (const p of ['app/dashboard/page.tsx','app/birthdays/page.tsx','app/members/
 assert.ok(read('app/api/messages/send/route.ts').includes('process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null'),
  'Preview messaging must not require an unavailable admin key')
 console.log('PASS Kingdom Citizens UI/auth/static audit contracts.')
+
+// Preview authentication must never silently redirect users to production.
+for (const path of ['app/components/GoogleLoginButton.tsx', 'app/register/page.tsx']) {
+  const source = read(path)
+  const origin = source.indexOf("if (typeof window !== 'undefined')")
+  const configured = source.indexOf('const siteUrl = process.env.NEXT_PUBLIC_SITE_URL')
+  assert.ok(origin >= 0 && configured > origin,
+    `${path}: browser origin must take precedence over configured production site URL`)
+  assert.ok(source.includes('window.location.origin'),
+    `${path}: OAuth callback must return to initiating deployment`)
+}
