@@ -6,14 +6,16 @@ import { startAndroidGoogleOAuth } from '../../lib/android-google-auth'
 import { isAndroidNativeApp } from '../../lib/mobile-runtime'
 
 const getURL = () => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (siteUrl) {
-    return siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`
-  }
-
+  // OAuth and email confirmation must return to the same deployment that
+  // initiated sign-in. A production NEXT_PUBLIC_SITE_URL on a Preview build
+  // must not silently move the user into the production environment.
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/`
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (siteUrl) {
+    return siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`
   }
 
   return 'http://localhost:3000/'
