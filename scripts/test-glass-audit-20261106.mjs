@@ -79,3 +79,14 @@ for (const path of ['app/components/GoogleLoginButton.tsx', 'app/register/page.t
   assert.ok(source.includes('window.location.origin'),
     `${path}: OAuth callback must return to initiating deployment`)
 }
+
+
+// Reject malformed/oversized encrypted-message envelopes before database writes.
+const messageSend = read('app/api/messages/send/route.ts')
+assert.ok(messageSend.includes('MAX_MESSAGE_BYTES = 64 * 1024'), 'Bound incoming message bytes')
+assert.ok(messageSend.includes("await request.text()"), 'Validate raw payload length before JSON parsing')
+assert.ok(messageSend.includes("status: 413"), 'Reject oversized encrypted messages')
+assert.ok(messageSend.includes("typeof bodyData.encryptedBody === 'string'"), 'Reject non-string encrypted payloads')
+assert.ok(messageSend.includes("uuid.test(recipientId)"), 'Reject malformed member identifiers')
+assert.ok(messageSend.includes("uuid.test(parentMessageId)"), 'Reject malformed reply identifiers')
+assert.ok(messageSend.includes("parsed.payload.ciphertext.length <= 60_000"), 'Bound ciphertext length')
