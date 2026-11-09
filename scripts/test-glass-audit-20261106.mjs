@@ -90,3 +90,16 @@ assert.ok(messageSend.includes("typeof bodyData.encryptedBody === 'string'"), 'R
 assert.ok(messageSend.includes("uuid.test(recipientId)"), 'Reject malformed member identifiers')
 assert.ok(messageSend.includes("uuid.test(parentMessageId)"), 'Reject malformed reply identifiers')
 assert.ok(messageSend.includes("parsed.payload.ciphertext.length <= 60_000"), 'Bound ciphertext length')
+
+assert.ok(messageSend.includes("Broadcasts cannot reply to private messages."),
+  'Broadcasts must not attach to unrelated private threads')
+assert.ok(messageSend.includes(".select('sender_id, recipient_id')") &&
+  messageSend.includes(".eq('id', parentMessageId)") &&
+  messageSend.includes(".maybeSingle()"),
+  'Resolve reply parent under sender RLS before insertion')
+assert.ok(messageSend.includes('parent.sender_id === user.id && parent.recipient_id === recipientId') &&
+  messageSend.includes('parent.sender_id === recipientId && parent.recipient_id === user.id'),
+  'Reply parent must belong to the same two participants in either direction')
+assert.ok(messageSend.indexOf("if (parentMessageId !== null) {\n    // Check the parent") <
+  messageSend.indexOf("await supabase.from('app_messages').insert({"),
+  'Reply authorization must happen before database insertion')
