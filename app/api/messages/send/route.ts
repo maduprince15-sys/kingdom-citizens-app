@@ -78,6 +78,11 @@ export async function POST(request: Request) {
   const admin = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null
 
   if (recipientId === 'all') {
+    // A broadcast is a new thread for each recipient. Never attach it to
+    // an unrelated private conversation, even when sent by an owner.
+    if (parentMessageId !== null) {
+      return NextResponse.json({ error: 'Broadcasts cannot reply to private messages.' }, { status: 400 })
+    }
     if (!senderIsOwnerOrAdmin) {
       return NextResponse.json(
         { error: 'Only owners and admins can broadcast to all members.' },
@@ -151,6 +156,24 @@ export async function POST(request: Request) {
       { error: 'Members can only send messages to board members.' },
       { status: 403 }
     )
+  }
+
+  if (parentMessageId !== null) {
+    // Check the parent using the signed-in user's RLS-scoped client.
+    // UUID syntax alone does not prove a reply belongs to this conversation.
+    const { data: parent, error: parentError } = await supabase
+      .from('app_messages')
+      .select('sender_id, recipient_id')
+      .eq('id', parentMessageId)
+      .maybeSingle()
+
+    if (parentError || !parent ||
+      !(
+        (parent.sender_id === user.id && parent.recipient_id === recipientId) ||
+        (parent.sender_id === recipientId && parent.recipient_id === user.id)
+      )) {
+      return NextResponse.json({ error: 'Reply reference is not in this conversation.' }, { status: 403 })
+    }
   }
 
   const { error: insertError } = await supabase.from('app_messages').insert({
