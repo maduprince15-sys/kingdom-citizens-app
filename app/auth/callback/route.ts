@@ -42,24 +42,27 @@ export async function GET(request: Request) {
             ? Boolean(user.user_metadata.show_birthday)
             : existingProfile?.show_birthday ?? true
 
-        await supabase.from('profiles').upsert({
-          id: user.id,
-          email: user.email,
-          full_name:
-            user.user_metadata?.full_name ||
-            user.user_metadata?.name ||
-            user.user_metadata?.display_name ||
-            'New Member',
-          phone:
-            existingProfile?.phone ||
-            user.user_metadata?.phone_number ||
-            user.user_metadata?.phone ||
-            null,
-          birthday_month: birthdayMonth,
-          birthday_day: birthdayDay,
-          show_birthday: showBirthday,
-          role: existingProfile?.role || 'member',
-        })
+        // Existing staff roles are managed through trusted administrative paths.
+        // OAuth must never rewrite a role or overwrite existing profile details.
+        if (!existingProfile) {
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name:
+              user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              user.user_metadata?.display_name ||
+              'New Member',
+            phone:
+              user.user_metadata?.phone_number ||
+              user.user_metadata?.phone ||
+              null,
+            birthday_month: birthdayMonth,
+            birthday_day: birthdayDay,
+            show_birthday: showBirthday,
+            role: 'member',
+          })
+        }
       }
 
       return NextResponse.redirect(new URL(next, origin))
