@@ -34,6 +34,12 @@ assert.ok(register.includes('Birthday (optional)') && register.includes('Boolean
 assert.ok(callback.includes('safeNextPath(searchParams.get'), 'Callback return paths validated')
 assert.ok(callback.includes('if (!existingProfile)') && callback.includes(".from('profiles').insert("), 'OAuth creates missing profiles without overwriting existing profile data')
 assert.ok(!callback.includes(".from('profiles').upsert(") && !callback.includes("role: existingProfile?.role"), 'OAuth cannot rewrite existing roles or profile fields')
+assert.ok(callback.includes('error: profileLookupError') && callback.includes('if (profileLookupError)') && callback.includes('status: 503'),
+  'OAuth must not treat a failed profile lookup as an absent profile')
+assert.ok(callback.includes('error: profileInsertError') && callback.includes('if (profileInsertError)'),
+  'OAuth must not redirect as success after failed member profile creation')
+assert.ok(callback.indexOf('if (profileLookupError)') < callback.indexOf('if (!existingProfile)'),
+  'OAuth profile lookup error must stop processing before attempting creation')
 
 assert.ok(safe.includes("value.startsWith('//')"), 'Protocol-relative redirects blocked')
 assert.ok(report.includes('CRITICAL') && report.includes('has_column_privilege'), 'Document actual direct-role-edit finding')
