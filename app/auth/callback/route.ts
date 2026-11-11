@@ -18,13 +18,13 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser()
 
       if (user) {
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile, error: profileLookupError } = await supabase
           .from('profiles')
           .select('id, role, phone, birthday_month, birthday_day, show_birthday')
           .eq('id', user.id)
           .maybeSingle()
 
-        const birthdayMonth =
+        // A failed RLS/network lookup is not evidence that a profile is absent.\n        // Never try to recreate or overwrite an existing staff profile.\n        if (profileLookupError) {\n          return NextResponse.json({ error: 'Member profile temporarily unavailable.' }, { status: 503 })\n        }\n\n        const birthdayMonth =
           user.user_metadata?.birthday_month !== undefined &&
           user.user_metadata?.birthday_month !== null
             ? Number(user.user_metadata.birthday_month)
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         // Existing staff roles are managed through trusted administrative paths.
         // OAuth must never rewrite a role or overwrite existing profile details.
         if (!existingProfile) {
-          await supabase.from('profiles').insert({
+          const { error: profileInsertError } = await supabase.from('profiles').insert({
             id: user.id,
             email: user.email,
             full_name:
@@ -60,8 +60,7 @@ export async function GET(request: Request) {
             birthday_month: birthdayMonth,
             birthday_day: birthdayDay,
             show_birthday: showBirthday,
-            role: 'member',
-          })
+            role: 'member',\n          })\n\n          if (profileInsertError) {\n            // Do not report successful onboarding when the profile was not saved.\n            return NextResponse.json({ error: 'Could not finish member profile setup.' }, { status: 503 })\n          }
         }
       }
 
