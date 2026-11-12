@@ -32,6 +32,7 @@ assert.ok(dashboard.includes('Account options'), 'Advanced account controls behi
 assert.ok(login.includes('useMemo(() => createClient(), [])') && register.includes('useMemo(() => createClient(), [])'), 'Stable Supabase clients')
 assert.ok(register.includes('Birthday (optional)') && register.includes('Boolean(monthNumber) !== Boolean(dayNumber)'), 'Birthdays optional and validated')
 assert.ok(callback.includes('safeNextPath(searchParams.get'), 'Callback return paths validated')
+assert.ok(!callback.includes('\\\\n'), 'OAuth callback must contain real line breaks, never literal escaped newline tokens')
 assert.ok(callback.includes('if (!existingProfile)') && callback.includes(".from('profiles').insert("), 'OAuth creates missing profiles without overwriting existing profile data')
 assert.ok(!callback.includes(".from('profiles').upsert(") && !callback.includes("role: existingProfile?.role"), 'OAuth cannot rewrite existing roles or profile fields')
 assert.ok(callback.includes('error: profileLookupError') && callback.includes('if (profileLookupError)') && callback.includes('status: 503'),
