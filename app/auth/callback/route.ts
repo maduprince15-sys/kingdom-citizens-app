@@ -24,7 +24,13 @@ export async function GET(request: Request) {
           .eq('id', user.id)
           .maybeSingle()
 
-        // A failed RLS/network lookup is not evidence that a profile is absent.\n        // Never try to recreate or overwrite an existing staff profile.\n        if (profileLookupError) {\n          return NextResponse.json({ error: 'Member profile temporarily unavailable.' }, { status: 503 })\n        }\n\n        const birthdayMonth =
+        // A failed RLS/network lookup is not evidence that a profile is absent.
+        // Never try to recreate or overwrite an existing staff profile.
+        if (profileLookupError) {
+          return NextResponse.json({ error: 'Member profile temporarily unavailable.' }, { status: 503 })
+        }
+
+        const birthdayMonth =
           user.user_metadata?.birthday_month !== undefined &&
           user.user_metadata?.birthday_month !== null
             ? Number(user.user_metadata.birthday_month)
@@ -60,7 +66,13 @@ export async function GET(request: Request) {
             birthday_month: birthdayMonth,
             birthday_day: birthdayDay,
             show_birthday: showBirthday,
-            role: 'member',\n          })\n\n          if (profileInsertError) {\n            // Do not report successful onboarding when the profile was not saved.\n            return NextResponse.json({ error: 'Could not finish member profile setup.' }, { status: 503 })\n          }
+            role: 'member',
+          })
+
+          if (profileInsertError) {
+            // Do not report successful onboarding when the profile was not saved.
+            return NextResponse.json({ error: 'Could not finish member profile setup.' }, { status: 503 })
+          }
         }
       }
 
