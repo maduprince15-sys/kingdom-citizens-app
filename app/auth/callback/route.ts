@@ -15,9 +15,17 @@ export async function GET(request: Request) {
     if (!error) {
       const {
         data: { user },
+        error: authenticatedUserError,
       } = await supabase.auth.getUser()
 
-      if (user) {
+      // A code exchange alone does not prove that an authenticated member
+      // session is available. Never redirect to the dashboard on a failed
+      // user lookup or silently skip the required profile setup.
+      if (authenticatedUserError || !user) {
+        return NextResponse.json({ error: 'Could not verify member sign-in.' }, { status: 503 })
+      }
+
+      {
         const { data: existingProfile, error: profileLookupError } = await supabase
           .from('profiles')
           .select('id, role, phone, birthday_month, birthday_day, show_birthday')
