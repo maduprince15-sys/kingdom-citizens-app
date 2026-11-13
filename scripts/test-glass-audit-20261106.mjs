@@ -42,6 +42,16 @@ assert.ok(callback.includes('error: profileInsertError') && callback.includes('i
 assert.ok(callback.indexOf('if (profileLookupError)') < callback.indexOf('if (!existingProfile)'),
   'OAuth profile lookup error must stop processing before attempting creation')
 
+assert.ok(callback.includes('error: authenticatedUserError') &&
+  callback.includes('if (authenticatedUserError || !user)'),
+  'OAuth must not claim successful login without a verified authenticated user')
+assert.ok(callback.indexOf('if (authenticatedUserError || !user)') < callback.indexOf('if (!existingProfile)'),
+  'OAuth must verify the authenticated member before profile setup')
+const googleButton = read('app/components/GoogleLoginButton.tsx')
+assert.ok(googleButton.includes('const { error } = await supabase.auth.signInWithOAuth({') &&
+  googleButton.includes('if (error)') && googleButton.includes('setLoading(false)'),
+  'Returned Google OAuth errors must be surfaced without leaving the button loading')
+
 assert.ok(safe.includes("value.startsWith('//')"), 'Protocol-relative redirects blocked')
 assert.ok(report.includes('CRITICAL') && report.includes('has_column_privilege'), 'Document actual direct-role-edit finding')
 const previewClient = read('lib/supabase/client.ts')
