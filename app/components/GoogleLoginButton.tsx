@@ -49,12 +49,18 @@ export default function GoogleLoginButton() {
     }
 
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${getURL()}auth/callback`,
         },
       })
+      // Supabase returns OAuth initiation failures in the result instead of
+      // throwing them. Surface the error rather than leaving a stuck spinner.
+      if (error) {
+        setMessage(error.message || 'Google sign-in failed.')
+        setLoading(false)
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Google sign-in failed.')
       setLoading(false)
