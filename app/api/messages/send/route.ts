@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       .neq('id', user.id)
 
     if (recipientsError) {
-      return NextResponse.json({ error: recipientsError.message }, { status: 400 })
+      return NextResponse.json({ error: 'Could not load broadcast recipients.' }, { status: 503 })
     }
 
     const rows =
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       .insert(rows)
 
     if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 400 })
+      return NextResponse.json({ error: 'Could not deliver the message.' }, { status: 503 })
     }
 
     const notificationRows =
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
   })
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 400 })
+    return NextResponse.json({ error: 'Could not deliver the message.' }, { status: 503 })
   }
 
   if (admin) {
