@@ -123,3 +123,12 @@ assert.ok(messageSend.includes('parent.sender_id === user.id && parent.recipient
 assert.ok(messageSend.indexOf("if (parentMessageId !== null) {\n    // Check the parent") <
   messageSend.indexOf("await supabase.from('app_messages').insert({"),
   'Reply authorization must happen before database insertion')
+
+// Never expose Supabase/PostgREST internal messages to public API callers.
+assert.ok(!messageSend.includes('error: recipientsError.message'),
+  'Broadcast recipient lookup errors must not leak database details')
+assert.ok(!messageSend.includes('error: insertError.message'),
+  'Message insertion errors must not leak database details')
+assert.ok(messageSend.includes("error: 'Could not load broadcast recipients.'") &&
+  messageSend.includes("error: 'Could not deliver the message.'"),
+  'Message API returns safe generic errors while preserving failure status')
