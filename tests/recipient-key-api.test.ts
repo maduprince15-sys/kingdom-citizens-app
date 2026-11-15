@@ -2,9 +2,11 @@ import { beforeAll, beforeEach, afterEach, expect, it, vi } from 'vitest'
 import { bytesToBase64 } from '../lib/e2ee/crypto'
 import { answerEnrollmentChallenge, proofDigest } from '../lib/e2ee/enrollment'
 import { generateRecipientIdentity, publicKeyFingerprint } from '../lib/e2ee/recipient-envelope'
-const m=vi.hoisted(()=>({ getUser:vi.fn(),from:vi.fn(),directory:vi.fn(),admin:vi.fn(),adminFrom:vi.fn(),rpc:vi.fn() }))
+const m=vi.hoisted(()=>({ sensitive:vi.fn(),getUser:vi.fn(),from:vi.fn(),directory:vi.fn(),admin:vi.fn(),adminFrom:vi.fn(),rpc:vi.fn() }))
 vi.mock('../lib/supabase/server',()=>({ createClient:async()=>({auth:{getUser:m.getUser},from:m.from,rpc:m.directory}) }))
 vi.mock('../lib/supabase/admin',()=>({createAdminClient:m.admin}))
+vi.mock('../lib/e2ee/sensitive-session',async importOriginal=>({...await importOriginal<object>(),requireSensitiveSession:m.sensitive}))
+import { SensitiveSessionError } from '../lib/e2ee/sensitive-session'
 import { GET,POST } from '../app/api/messages/recipient-keys/route'
 const A='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',B='bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',D='dddddddd-dddd-4ddd-dddd-dddddddddddd',C='cccccccc-cccc-4ccc-cccc-cccccccccccc'
 let identity: CryptoKeyPair, spki:string,keyId:string
@@ -15,7 +17,7 @@ function query(data:unknown,error:unknown=null){
 function request(body:unknown){return new Request('https://preview.invalid/api/messages/recipient-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
 beforeAll(async()=>{ identity=await generateRecipientIdentity();spki=bytesToBase64(new Uint8Array(await crypto.subtle.exportKey('spki',identity.publicKey)));keyId=await publicKeyFingerprint(identity.publicKey) },30_000)
 beforeEach(()=>{
- vi.resetAllMocks();vi.stubEnv('KC_RECIPIENT_ENROLLMENT_ENABLED','isolated-test-only');vi.stubEnv('KC_ISOLATED_TEST_PROJECT_REF','synthetic-test');vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL','https://synthetic-test.supabase.co');vi.stubEnv('VERCEL_ENV','preview')
+ vi.resetAllMocks();m.sensitive.mockResolvedValue({sessionId:'eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee',stepUpAt:1,tokenExpiresAt:2});vi.stubEnv('KC_RECIPIENT_ENROLLMENT_ENABLED','isolated-test-only');vi.stubEnv('KC_ISOLATED_TEST_PROJECT_REF','synthetic-test');vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL','https://synthetic-test.supabase.co');vi.stubEnv('VERCEL_ENV','preview')
  m.getUser.mockResolvedValue({data:{user:{id:A,email_confirmed_at:new Date().toISOString(),is_anonymous:false}},error:null})
  m.from.mockReturnValue(query({id:A}));m.admin.mockReturnValue({from:m.adminFrom,rpc:m.rpc});m.rpc.mockResolvedValue({data:{revision:1,version:1,keyId},error:null})
 })
@@ -41,15 +43,15 @@ it('creates a challenge bound only to the authenticated Citizen and possession o
  expect(response.status).toBe(201)
  const challenge=await response.json();expect(challenge.context.citizenId).toBe(A)
  const answer=await answerEnrollmentChallenge(challenge,A,identity)
- expect(write.insert).toHaveBeenCalledWith(expect.objectContaining({citizen_id:A,device_id:D,fingerprint:keyId,proof_hash:await proofDigest(answer.proof)}))
- expect(JSON.stringify(write.insert.mock.calls[0])).not.toContain(answer.proof)
+ expect(m.rpc).toHaveBeenCalledWith('kc_sensitive_key_operation',expect.objectContaining({p_actor:A,p_action:'challenge',p_payload:expect.objectContaining({citizen_id:A,device_id:D,fingerprint:keyId,proof_hash:await proofDigest(answer.proof)})}))
+ expect(JSON.stringify(m.rpc.mock.calls[0])).not.toContain(answer.proof)
 })
 it('finishes with the server-derived actor after constant-time proof validation',async()=>{
  const proof=bytesToBase64(crypto.getRandomValues(new Uint8Array(32))),lookup=query({id:C,proof_hash:await proofDigest(proof),prior_proof_hash:null,expires_at:new Date(Date.now()+60_000).toISOString(),used_at:null})
  m.adminFrom.mockReturnValue(lookup)
  expect((await POST(request({action:'complete',challengeId:C,proof}))).status).toBe(200)
  expect(lookup.eq).toHaveBeenCalledWith('citizen_id',A)
- expect(m.rpc).toHaveBeenCalledWith('kc_finish_recipient_enrollment',expect.objectContaining({p_actor:A,p_challenge:C,p_proof:proof}))
+ expect(m.rpc).toHaveBeenCalledWith('kc_sensitive_key_operation',expect.objectContaining({p_actor:A,p_action:'complete',p_payload:expect.objectContaining({challenge_id:C,proof})}))
 })
 it('rejects another Citizen challenge before calling the commit function',async()=>{
  m.adminFrom.mockReturnValue(query(null))
@@ -65,7 +67,7 @@ it('refuses account-only reenrollment after revocation',async()=>{
 })
 it('revocation uses only the authenticated actor and expected revision',async()=>{
  expect((await POST(request({action:'revoke',expectedRevision:1}))).status).toBe(200)
- expect(m.rpc).toHaveBeenCalledWith('kc_revoke_recipient_key',{p_actor:A,p_expected_revision:1})
+ expect(m.rpc).toHaveBeenCalledWith('kc_sensitive_key_operation',expect.objectContaining({p_actor:A,p_action:'revoke',p_payload:{expected_revision:1}}))
 })
 it('rejects oversized enrollment data without mutation',async()=>{
  expect((await POST(request({action:'challenge',deviceId:D,expectedRevision:0,publicSpki:'a'.repeat(9000)}))).status).toBe(413);expect(m.admin).not.toHaveBeenCalled()
@@ -112,21 +114,20 @@ it('rejects a missing content type',async()=>{
 })
 it('accepts same-origin JSON with charset and retains authenticated actor ownership',async()=>{
  const req=request({action:'revoke',expectedRevision:1});req.headers.set('Origin','https://preview.invalid');req.headers.set('Sec-Fetch-Site','same-origin');req.headers.set('Content-Type','application/json; charset=utf-8')
- expect((await POST(req)).status).toBe(200);expect(m.rpc).toHaveBeenCalledWith('kc_revoke_recipient_key',{p_actor:A,p_expected_revision:1})
+ expect((await POST(req)).status).toBe(200);expect(m.rpc).toHaveBeenCalledWith('kc_sensitive_key_operation',expect.objectContaining({p_actor:A,p_action:'revoke',p_payload:{expected_revision:1}}))
 })
 
 it('rejects account switching between validation and mutation',async()=>{
  const req=request({action:'revoke',expectedRevision:1});req.headers.set('X-KC-Citizen',B)
  expect((await POST(req)).status).toBe(403);expect(m.admin).not.toHaveBeenCalled()
 })
-it('cancels only an owned, unused challenge and filters both terminal states',async()=>{
- const q=query({id:C});m.adminFrom.mockReturnValue(q)
+it('cancels through the session-locked owner operation',async()=>{
  expect((await POST(request({action:'cancel',challengeId:C}))).status).toBe(200)
- expect(q.eq).toHaveBeenCalledWith('citizen_id',A);expect(q.eq).toHaveBeenCalledWith('id',C)
- expect(q.is).toHaveBeenCalledWith('used_at',null);expect(q.is).toHaveBeenCalledWith('cancelled_at',null)
+ expect(m.rpc).toHaveBeenCalledWith('kc_sensitive_key_operation',expect.objectContaining({p_actor:A,p_action:'cancel',p_payload:{challenge_id:C}}))
 })
-it('returns a safe conflict for unavailable or terminal cancellation',async()=>{
- m.adminFrom.mockReturnValue(query(null));expect((await POST(request({action:'cancel',challengeId:C}))).status).toBe(409)
+it('returns safe conflict for terminal cancellation',async()=>{
+ m.rpc.mockResolvedValue({data:null,error:{message:'private database detail'}})
+ expect((await POST(request({action:'cancel',challengeId:C}))).status).toBe(409)
 })
 it('rejects completion of cancelled challenges before checking possession or mutation',async()=>{
  m.adminFrom.mockReturnValue(query({id:C,cancelled_at:new Date().toISOString(),expires_at:new Date(Date.now()+60_000).toISOString()}))
@@ -136,4 +137,13 @@ it('rejects completion of cancelled challenges before checking possession or mut
 it('rejects uppercase Production host aliases before privileged access',async()=>{
  vi.stubEnv('KC_ISOLATED_TEST_PROJECT_REF','JNGBHEJFQBYJLETFKNKH');vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL','https://JNGBHEJFQBYJLETFKNKH.supabase.co')
  expect((await POST(request({action:'revoke',expectedRevision:1}))).status).toBe(503);expect(m.admin).not.toHaveBeenCalled()
+})
+
+it.each([401,428,503])('denies sensitive operations when strict session authorization returns %s',async status=>{
+ m.sensitive.mockRejectedValue(new SensitiveSessionError(status))
+ expect((await POST(request({action:'revoke',expectedRevision:1}))).status).toBe(status);expect(m.admin).not.toHaveBeenCalled()
+})
+it('registers authenticated trusted approval through the session-locked operation',async()=>{
+ expect((await POST(request({action:'approve',challengeId:C,priorProof:'A'.repeat(43)+'='}))).status).toBe(200)
+ expect(m.rpc).toHaveBeenCalledWith('kc_sensitive_key_operation',expect.objectContaining({p_actor:A,p_action:'approve',p_payload:{challenge_id:C,prior_proof:'A'.repeat(43)+'='}}))
 })

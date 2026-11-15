@@ -3,7 +3,7 @@ import {createSessionKeyAccess} from '../lib/e2ee/session-access'
 import type {ActiveIdentityRecord} from '../lib/e2ee/identity-vault'
 const active={citizenId:'citizen-a',deviceId:'device-a',state:'active',revision:1,keyId:'pin',revokedAt:null} as ActiveIdentityRecord
 const getCitizen=vi.fn(),getActive=vi.fn(),load=vi.fn()
-const setup=()=>createSessionKeyAccess({citizenId:'citizen-a',getCitizen,getActive,vault:{load}})
+const setup=()=>createSessionKeyAccess({citizenId:'citizen-a',assertUnlocked:()=>{},getCitizen,getActive,vault:{load}})
 beforeEach(()=>{getCitizen.mockReset().mockResolvedValue('citizen-a');getActive.mockReset().mockImplementation(async()=>({...active}));load.mockReset().mockResolvedValue({privateKey:{extractable:false}})})
 it('validates sessions and current registry before and after protected work',async()=>{
  const access=setup(),operation=vi.fn().mockResolvedValue('approved')
@@ -31,3 +31,8 @@ it('does not rotate or regenerate missing material',async()=>{load.mockResolvedV
 it('cannot use a disposed controller after remount or account switch',async()=>{const access=setup();access.dispose();await expect(access.use('pin',vi.fn())).rejects.toThrow()})
 it('propagates denied registry/profile access without using keys',async()=>{getActive.mockRejectedValue(new Error('profile removed'));await expect(setup().use('pin',vi.fn())).rejects.toThrow();expect(load).not.toHaveBeenCalled()})
 it('reauthentication keeps the same retained key without rotating',async()=>{const access=setup();access.invalidate();expect(await access.use('pin',async()=>'same-key')).toBe('same-key')})
+
+it('checks explicit unlock state before touching identity or storage',async()=>{
+ const access=createSessionKeyAccess({citizenId:'citizen-a',getCitizen,getActive,vault:{load},assertUnlocked:()=>{throw new Error('locked')}})
+ await expect(access.use('pin',vi.fn())).rejects.toThrow('locked');expect(load).not.toHaveBeenCalled();expect(getCitizen).not.toHaveBeenCalled()
+})

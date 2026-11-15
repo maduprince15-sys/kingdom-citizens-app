@@ -38,3 +38,5 @@ Then run `npm run test:two-citizen` only against the authorized isolated project
 - Native WebView key persistence and session transitions using the verified independent beta. No device behavior is established by Node IndexedDB tests or APK compilation.
 
 No Production migrations, policy changes, data copying or manual installation are authorized by this document.
+
+For strict key-management acceptance, A/B/C also need controlled verified TOTP factors through supported Supabase flows and the reviewed sensitive-session migration. The page requires explicit unlock; password-only login is insufficient. Do not provide factor seeds or live codes through issues/chat. Follow [the isolated migration runbook](ISOLATED_MIGRATION_RUNBOOK.md) for exact order, private database connection checks, read-only metadata command, session deletion/approval revocation tests and rollback. The runner continues to label unavailable MFA/pairing/Storage fixtures BLOCKED rather than inventing provider evidence.

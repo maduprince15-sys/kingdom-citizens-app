@@ -5,6 +5,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { resourceIdPattern } from '../../../../lib/messaging/access'
 import { createEnrollmentChallenge, importEnrollmentPublicKey, proofDigest } from '../../../../lib/e2ee/enrollment'
 
+import { requireSensitiveSession, sensitiveOperationArgs, SensitiveSessionError } from '../../../../lib/e2ee/sensitive-session'
 import { isolatedRecipientEnrollmentEnabled } from '../../../../lib/e2ee/isolated-config'
 
 const reply = (body: Record<string, unknown>, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } })
@@ -16,7 +17,13 @@ async function authenticate() {
   if (user.is_anonymous || !user.email_confirmed_at) return { response: reply({ error: 'A confirmed Citizen account is required.' }, 403) }
   const { data: profile, error: profileError } = await client.from('profiles').select('id').eq('id', user.id).maybeSingle()
   if (profileError || !profile) return { response: reply({ error: 'Citizen profile unavailable.' }, 403) }
-  return { client, user }
+  try {
+    const sensitive = await requireSensitiveSession(client,user.id)
+    return { client, user, sensitive }
+  } catch(error) {
+    const status=error instanceof SensitiveSessionError?error.status:503
+    return { response:reply({ error:status===428?'Recent authenticator verification required.':'Sensitive session unavailable.' },status) }
+  }
 }
 async function validProof(proof: unknown, expected: unknown) {
   if (typeof proof !== 'string' || !/^[A-Za-z0-9+/]{43}=$/.test(proof) || typeof expected !== 'string' || !/^[0-9a-f]{64}$/.test(expected)) return false
@@ -82,20 +89,25 @@ export async function POST(request: Request) {
   try {
     const auth = await authenticate()
     if (auth.response) return auth.response
-    const { user } = auth
+    const { user, sensitive } = auth
     if (request.headers.has('x-kc-citizen') && request.headers.get('x-kc-citizen') !== user.id) return reply({ error: 'Citizen session changed.' }, 403)
     let input: Record<string, unknown> | null
     try { input = await body(request) } catch { return reply({ error: 'Invalid enrollment request.' }, 400) }
     if (!input) return reply({ error: 'Enrollment request is too large.' }, 413)
-    const allowed = input.action === 'challenge' ? ['action','deviceId','publicSpki','expectedRevision'] : input.action === 'complete' ? ['action','challengeId','proof','priorProof'] : input.action === 'cancel' ? ['action','challengeId'] : input.action === 'revoke' ? ['action','expectedRevision'] : []
+    const allowed = input.action === 'approve' ? ['action','challengeId','priorProof'] : input.action === 'challenge' ? ['action','deviceId','publicSpki','expectedRevision'] : input.action === 'complete' ? ['action','challengeId','proof','priorProof'] : input.action === 'cancel' ? ['action','challengeId'] : input.action === 'revoke' ? ['action','expectedRevision'] : []
     if (!allowed.length || Object.keys(input).some(key => !allowed.includes(key))) return reply({ error: 'Invalid enrollment request.' }, 400)
     const admin = createAdminClient()
     if (input.action === 'cancel') {
       if (typeof input.challengeId !== 'string' || !resourceIdPattern.test(input.challengeId)) return reply({ error: 'Invalid challenge.' }, 400)
-      const { data, error } = await admin.from('citizen_key_challenges').update({ cancelled_at: new Date().toISOString() })
-        .eq('id', input.challengeId).eq('citizen_id', user.id).is('used_at', null).is('cancelled_at', null).select('id').maybeSingle()
+      const { data, error } = await admin.rpc('kc_sensitive_key_operation',sensitiveOperationArgs(user.id,sensitive,'cancel',{challenge_id:input.challengeId}))
       if (error || !data) return reply({ error: 'Pairing request unavailable or already closed.' }, 409)
       return reply({ success: true })
+    }
+    if (input.action === 'approve') {
+      if (typeof input.challengeId !== 'string' || !resourceIdPattern.test(input.challengeId) || typeof input.priorProof !== 'string' || !/^[A-Za-z0-9+/]{43}=$/.test(input.priorProof)) return reply({error:'Invalid approval.'},400)
+      const {error}=await admin.rpc('kc_sensitive_key_operation',sensitiveOperationArgs(user.id,sensitive,'approve',{challenge_id:input.challengeId,prior_proof:input.priorProof}))
+      if(error)return reply({error:'Approval unavailable or device authorization changed.'},409)
+      return reply({success:true})
     }
     if (input.action === 'complete') {
       if (typeof input.challengeId !== 'string' || !resourceIdPattern.test(input.challengeId)) return reply({ error: 'Invalid challenge.' }, 400)
@@ -104,14 +116,14 @@ export async function POST(request: Request) {
       if (!challenge) return reply({ error: 'Challenge not found.' }, 404)
       if (challenge.cancelled_at || challenge.used_at || Date.parse(challenge.expires_at) <= Date.now()) return reply({ error: 'Challenge expired or already used.' }, 409)
       if (!await validProof(input.proof, challenge.proof_hash) || (challenge.prior_proof_hash ? !await validProof(input.priorProof, challenge.prior_proof_hash) : input.priorProof != null)) return reply({ error: 'Private-key possession could not be verified.' }, 403)
-      const { data, error: finishError } = await admin.rpc('kc_finish_recipient_enrollment', { p_actor: user.id, p_challenge: input.challengeId, p_proof: input.proof, p_prior_proof: input.priorProof || null })
+      const { data, error: finishError } = await admin.rpc('kc_sensitive_key_operation',sensitiveOperationArgs(user.id,sensitive,'complete',{challenge_id:input.challengeId,proof:input.proof,prior_proof:input.priorProof || null}))
       if (finishError) return reply({ error: 'Enrollment conflict or expired challenge. Start again.' }, 409)
       return reply({ success: true, enrollment: data })
     }
     const expected = input.expectedRevision
     if (typeof expected !== 'number' || !Number.isInteger(expected) || expected < 0 || expected > 2_000_000_000) return reply({ error: 'Invalid key revision.' }, 400)
     if (input.action === 'revoke') {
-      const { data, error } = await admin.rpc('kc_revoke_recipient_key', { p_actor: user.id, p_expected_revision: expected })
+      const { data, error } = await admin.rpc('kc_sensitive_key_operation',sensitiveOperationArgs(user.id,sensitive,'revoke',{expected_revision:expected}))
       if (error) return reply({ error: 'Key revision changed. Refresh before revoking.' }, 409)
       return reply({ success: true, enrollment: data })
     }
@@ -131,7 +143,7 @@ export async function POST(request: Request) {
     }
     const context = { challengeId: crypto.randomUUID(), citizenId: user.id, deviceId: input.deviceId, keyId: imported.keyId, expectedRevision: expected, expiresAt: new Date(Date.now() + 5 * 60_000).toISOString() }
     const created = await createEnrollmentChallenge(context, imported.key, prior?.key)
-    const { error: challengeError } = await admin.from('citizen_key_challenges').insert({ id: context.challengeId, citizen_id: user.id, device_id: context.deviceId, expected_revision: expected, public_spki: imported.spki, fingerprint: imported.keyId, proof_hash: created.proofHash, prior_fingerprint: created.challenge.priorKeyId, prior_proof_hash: created.priorProofHash, expires_at: context.expiresAt })
+    const { error: challengeError } = await admin.rpc('kc_sensitive_key_operation',sensitiveOperationArgs(user.id,sensitive,'challenge',{ id: context.challengeId, citizen_id: user.id, device_id: context.deviceId, expected_revision: expected, public_spki: imported.spki, fingerprint: imported.keyId, proof_hash: created.proofHash, prior_fingerprint: created.challenge.priorKeyId, prior_proof_hash: created.priorProofHash, expires_at: context.expiresAt }))
     if (challengeError) return reply({ error: 'Could not start recipient enrollment.' }, 503)
     return reply(created.challenge, 201)
   } catch { return reply({ error: 'Recipient enrollment unavailable.' }, 503) }

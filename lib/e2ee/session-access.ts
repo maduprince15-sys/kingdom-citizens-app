@@ -4,13 +4,15 @@ type Vault = { load: (citizenId: string, active: ActiveIdentityRecord, pin: stri
 // getCitizen must use validated getUser(), not a locally decoded session/JWT.
 // No private-key cache. Auth events and logout invalidate in-flight operations.
 export function createSessionKeyAccess(deps: {
-  citizenId: string; getCitizen: () => Promise<string | null>
+  citizenId: string; assertUnlocked: () => void; getCitizen: () => Promise<string | null>
   getActive: () => Promise<ActiveIdentityRecord>; vault: Vault
 }) {
   let generation = 0, disposed = false
   const invalidate = () => { generation++ }
   async function verify(epoch: number) {
+    deps.assertUnlocked()
     if (disposed || epoch !== generation || await deps.getCitizen() !== deps.citizenId || epoch !== generation) throw new Error('Reauthenticate before using encryption keys.')
+    deps.assertUnlocked()
   }
   return {
     invalidate,
