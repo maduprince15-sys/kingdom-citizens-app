@@ -120,6 +120,18 @@ export default function GroupsManager({
     router.refresh()
   }
 
+  async function requestGroupAction(url: string, payload: Record<string, string>) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      })
+      return response.ok
+    } catch {
+      setMessage('Group service is unavailable. Please try again.')
+      return false
+    }
+  }
+
   async function addMemberToGroup(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
@@ -131,17 +143,8 @@ export default function GroupsManager({
       return
     }
 
-    const { error } = await supabase.from('citizen_group_members').insert({
-      group_id: selectedGroupId,
-      user_id: selectedUserId,
-      role_in_group: roleInGroup,
-    })
-
-    if (error) {
-      setMessage(error.message)
-      setLoading(false)
-      return
-    }
+    const success = await requestGroupAction('/api/groups/membership', { action: 'add', groupId: selectedGroupId, userId: selectedUserId, role: roleInGroup })
+    if (!success) { setMessage('Could not add this Citizen to the group.'); setLoading(false); return }
 
     setMessage('Member added to group.')
     setSelectedUserId('')
@@ -154,15 +157,10 @@ export default function GroupsManager({
     const confirmed = window.confirm('Remove this member from the group?')
     if (!confirmed) return
 
-    const { error } = await supabase
-      .from('citizen_group_members')
-      .delete()
-      .eq('id', membershipId)
-
-    if (error) {
-      setMessage(error.message)
-      return
-    }
+    const membership = groupMembers.find(item => item.id === membershipId)
+    if (!membership) return
+    const success = await requestGroupAction('/api/groups/membership', { action: 'remove', groupId: membership.group_id, userId: membership.user_id })
+    if (!success) { setMessage('Could not remove this Citizen from the group.'); return }
 
     router.refresh()
   }
@@ -188,15 +186,8 @@ export default function GroupsManager({
     const confirmed = window.confirm('Delete this group and its memberships?')
     if (!confirmed) return
 
-    const { error } = await supabase
-      .from('citizen_groups')
-      .delete()
-      .eq('id', groupId)
-
-    if (error) {
-      setMessage(error.message)
-      return
-    }
+    const success = await requestGroupAction('/api/groups/delete', { groupId })
+    if (!success) { setMessage('Could not delete this group.'); return }
 
     router.refresh()
   }

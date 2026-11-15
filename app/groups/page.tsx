@@ -79,6 +79,8 @@ export default async function GroupsPage() {
                 {group.name}
               </h2>
 
+              <Link href={`/groups/${group.id}`} className='mt-3 inline-block text-yellow-300 underline'>Open group discussion</Link>
+
               {group.description && (
                 <p className='mt-3 text-sm leading-7 text-gray-300'>
                   {group.description}
