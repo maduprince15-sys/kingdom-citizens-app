@@ -13,7 +13,7 @@ export type RecipientEnvelope = {
   recipients: { citizenId: string; keyId: string; wrappedKey: string }[]
 }
 export async function generateRecipientIdentity() {
-  return crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 3072, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, false, ['wrapKey', 'unwrapKey'])
+  return crypto.subtle.generateKey({ name: 'RSA-OAEP', modulusLength: 3072, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, false, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'])
 }
 export async function publicKeyFingerprint(key: CryptoKey) {
   const algorithm = key.algorithm as RsaHashedKeyAlgorithm
