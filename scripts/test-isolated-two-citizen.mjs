@@ -20,6 +20,7 @@ try {
       assert.equal(error, null, 'Synthetic registration failed')
       if (!data.session) {
         report.push({ check: `Citizen ${index === 0 ? 'A' : 'B'} registration`, status: 'BLOCKED', reason: 'Email confirmation required; no inbox verification invented.' })
+        throw new Error('CONFIRMATION_REQUIRED')
       }
     }
     const { data, error } = await clients[index].auth.signInWithPassword(accounts[index])
@@ -53,9 +54,14 @@ try {
   report.push({ check: 'Both local sessions sign out', status: 'READY' })
   report.push({ check: 'Registration confirmation, recovery email, Google provider, unauthorized mutations, messaging/attachments', status: 'BLOCKED', reason: 'Separate inbox/browser, policy fixture and recipient-key setup required; mocked suites cover code boundaries.' })
   console.log(JSON.stringify(report, null, 2))
-} catch {
-  console.error('FAILED: isolated two-Citizen integration assertion. No tokens, credentials or private rows are printed.')
-  process.exitCode = 1
+} catch (error) {
+  if (error.message === 'CONFIRMATION_REQUIRED') {
+    console.log(JSON.stringify(report, null, 2))
+    process.exitCode = 2
+  } else {
+    console.error('FAILED: isolated two-Citizen integration assertion. No tokens, credentials or private rows are printed.')
+    process.exitCode = 1
+  }
 } finally {
   await Promise.allSettled(clients.map(client => client.auth.signOut({ scope: 'local' })))
 }
