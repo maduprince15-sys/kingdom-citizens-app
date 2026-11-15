@@ -61,3 +61,9 @@ Activation also requires abuse/rate controls, fresh-session/step-up policy for s
 Use the latest verified run on the existing beta branch, authenticated as an account allowed to read repository Actions artifacts: run Summary → Artifacts → Kingdom-Citizens-Android-Beta. On a trusted network that permits GitHub's Azure artifact host, the supported CLI equivalent is `gh run download <verified-run-id> --repo maduprince15-sys/kingdom-citizens-app --name Kingdom-Citizens-Android-Beta`, then `sha256sum --check android-beta-sha256.txt` in the extracted directory. Compare source/checksum/signature evidence with the same run's summary.
 
 The existing second Actions job actually downloads bytes and verifies SHA-256/ZIP integrity within the same authorized run. It does not publish a release or grant public artifact access. The workspace proxy's 403 is a network restriction, not justification to broaden permissions or expose a bypass credential. Preserve the independent beta package/logo/OAuth scheme. No manual installation requested while backend/device gates remain.
+
+## Browser request integrity
+
+Enrollment POST requests require `application/json`. A supplied Origin must exactly match the request origin; browser Fetch Metadata rejects both cross-site and same-site sibling origins. These checks run before session lookup and privileged-client creation, including for key revocation. Non-browser clients may omit Origin/Fetch Metadata but still require JSON, authenticated ownership, isolated configuration and possession proofs. Authentication alone does not authorize replacement or recover lost keys.
+
+Regression coverage includes hostile/sibling/null origins, cross-site and same-site metadata, simple-request MIME types, absent MIME type, and legitimate same-origin JSON with a charset. This closes a candidate cookie-authenticated mutation boundary; it does not satisfy the remaining device pairing, step-up, deployed policy or genuine integration gates above.

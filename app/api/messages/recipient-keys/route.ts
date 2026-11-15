@@ -72,6 +72,16 @@ export async function GET(request: Request) {
   } catch { return reply({ error: 'Recipient directory unavailable.' }, 503) }
 }
 export async function POST(request: Request) {
+  // Browser cookie authentication must not authorize cross-origin key mutations.
+  const origin = request.headers.get('origin')
+  const fetchSite = request.headers.get('sec-fetch-site')
+  if ((origin !== null && origin !== new URL(request.url).origin) ||
+      (fetchSite !== null && fetchSite !== 'same-origin' && fetchSite !== 'none')) {
+    return reply({ error: 'Cross-origin enrollment requests are not allowed.' }, 403)
+  }
+  if (request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase() !== 'application/json') {
+    return reply({ error: 'Enrollment requests require application/json.' }, 415)
+  }
   try {
     const auth = await authenticate()
     if (auth.response) return auth.response

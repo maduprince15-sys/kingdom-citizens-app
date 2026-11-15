@@ -12,7 +12,7 @@ function query(data:unknown,error:unknown=null){
  const q={select:vi.fn(),eq:vi.fn(),is:vi.fn(),maybeSingle:vi.fn().mockResolvedValue({data,error}),insert:vi.fn().mockResolvedValue({error})}
  q.select.mockReturnValue(q);q.eq.mockReturnValue(q);q.is.mockReturnValue(q);return q
 }
-function request(body:unknown){return new Request('https://preview.invalid/api/messages/recipient-keys',{method:'POST',body:JSON.stringify(body)})}
+function request(body:unknown){return new Request('https://preview.invalid/api/messages/recipient-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
 beforeAll(async()=>{ identity=await generateRecipientIdentity();spki=bytesToBase64(new Uint8Array(await crypto.subtle.exportKey('spki',identity.publicKey)));keyId=await publicKeyFingerprint(identity.publicKey) },30_000)
 beforeEach(()=>{
  vi.resetAllMocks();vi.stubEnv('KC_RECIPIENT_ENROLLMENT_ENABLED','isolated-test-only');vi.stubEnv('KC_ISOLATED_TEST_PROJECT_REF','synthetic-test');vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL','https://synthetic-test.supabase.co');vi.stubEnv('VERCEL_ENV','preview')
@@ -92,4 +92,25 @@ it('rejects unexpected prior-proof payloads for initial enrollment',async()=>{
  m.adminFrom.mockReturnValue(query({id:C,proof_hash:await proofDigest(proof),prior_proof_hash:null,expires_at:new Date(Date.now()+60_000).toISOString(),used_at:null}))
  expect((await POST(request({action:'complete',challengeId:C,proof,priorProof:{privateKey:'must-not-be-forwarded'}}))).status).toBe(403)
  expect(m.rpc).not.toHaveBeenCalled()
+})
+
+it.each(['https://attacker.invalid','https://sibling.preview.invalid','null'])('rejects an untrusted Origin %s before authentication',async origin=>{
+ const req=request({action:'revoke',expectedRevision:1});req.headers.set('Origin',origin)
+ expect((await POST(req)).status).toBe(403);expect(m.getUser).not.toHaveBeenCalled();expect(m.admin).not.toHaveBeenCalled()
+})
+it.each(['cross-site','same-site'])('rejects browser fetch metadata %s even with a matching origin',async site=>{
+ const req=request({action:'revoke',expectedRevision:1});req.headers.set('Origin','https://preview.invalid');req.headers.set('Sec-Fetch-Site',site)
+ expect((await POST(req)).status).toBe(403);expect(m.admin).not.toHaveBeenCalled()
+})
+it.each(['text/plain','application/x-www-form-urlencoded','multipart/form-data'])('rejects simple-request content type %s',async contentType=>{
+ const req=request({action:'revoke',expectedRevision:1});req.headers.set('Content-Type',contentType)
+ expect((await POST(req)).status).toBe(415);expect(m.getUser).not.toHaveBeenCalled();expect(m.admin).not.toHaveBeenCalled()
+})
+it('rejects a missing content type',async()=>{
+ const req=request({action:'revoke',expectedRevision:1});req.headers.delete('Content-Type')
+ expect((await POST(req)).status).toBe(415);expect(m.admin).not.toHaveBeenCalled()
+})
+it('accepts same-origin JSON with charset and retains authenticated actor ownership',async()=>{
+ const req=request({action:'revoke',expectedRevision:1});req.headers.set('Origin','https://preview.invalid');req.headers.set('Sec-Fetch-Site','same-origin');req.headers.set('Content-Type','application/json; charset=utf-8')
+ expect((await POST(req)).status).toBe(200);expect(m.rpc).toHaveBeenCalledWith('kc_revoke_recipient_key',{p_actor:A,p_expected_revision:1})
 })
