@@ -18,3 +18,16 @@ export function privateReadDenied(result) {
   if (!Array.isArray(result.data)) throw new Error('Privacy probe returned an invalid result.')
   return result.data.length === 0
 }
+
+// Pure preflight shared by the live runner and its offline validation command.
+// No application environment fallback and no credential values in diagnostics.
+export function isolatedConfigurationReady(env) {
+  const ref = env.KC_ISOLATED_TEST_PROJECT_REF
+  const accounts = ['A', 'B'].map(name => ({ email: env[`KC_TEST_CITIZEN_${name}_EMAIL`], password: env[`KC_TEST_CITIZEN_${name}_PASSWORD`] }))
+  return env.KC_INTEGRATION_OPT_IN === 'synthetic-isolated-only' &&
+    typeof ref === 'string' && /^[a-z0-9-]{1,63}$/.test(ref) && ref !== 'jngbhejfqbyjletfknkh' &&
+    env.KC_TEST_SUPABASE_URL === `https://${ref}.supabase.co` &&
+    ordinaryPublishableKey(env.KC_TEST_SUPABASE_PUBLISHABLE_KEY, ref) &&
+    accounts.every(account => typeof account.email === 'string' && account.email.trim().length > 0 && typeof account.password === 'string' && account.password.length > 0) &&
+    accounts[0].email.trim().toLowerCase() !== accounts[1].email.trim().toLowerCase()
+}

@@ -22,13 +22,6 @@ export default async function MessageDetailPage({ params }: Props) {
     redirect('/login')
   }
 
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  const role = currentProfile?.role ?? 'member'
   const canReply = true
 
   const { data: message, error } = await supabase
