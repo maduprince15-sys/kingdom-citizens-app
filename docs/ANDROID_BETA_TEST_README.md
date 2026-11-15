@@ -15,7 +15,7 @@ The Android debug beta is a separate installable application. It does **not** ov
 
 ## Consolidated candidate — 15 November 2026
 
-Web source is pinned to development commit `8235dd365b68dfd72dd2e1b1fee0dc089c71fc70`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
+Web source is pinned to development commit `abddd6a56097eb23aa3240f2d515522737121d99`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
 
 Later ordered acceptance (not a request to test now):
 
@@ -51,3 +51,9 @@ The build verifies APK signing and SHA-256, then a separate Actions job download
 Current candidate: 184 tests, bounded/canonical recipient-envelope parsing, access rechecks after attachment reads, generic no-store storage errors, and integration checks that no longer treat network/schema/expired-session failures as privacy passes. Service-role/secret keys are rejected for ordinary-Citizen integration tests.
 
 The existing separate Actions download/checksum job remains required. Genuine backend/account, recipient enrollment/recovery, hosted RLS/Storage and device verification remain BLOCKED; candidate crypto is not enabled, attachments stay disabled and no installation testing is requested.
+
+## Authenticated key enrollment/revocation candidate
+
+This candidate includes 237 tests, including 40 disposable Postgres policy tests and actual private-key possession/rotation checks. The isolated-only recipient API binds keys to confirmed authenticated Citizens, rejects owner substitution, requires old/new possession for rotation, and uses immutable versions plus compare-and-swap/revocation. Neither private key transfers between approved-device proof helpers. Login alone cannot replace or recover a lost private key.
+
+No hosted migration was applied. Ordinary messaging/attachments remain disabled pending isolated backend/account, pairing, persistence/recovery and deployed RLS verification. See `docs/RECIPIENT_ENROLLMENT_AND_RECOVERY.md` for the recovery trade-offs and authenticated owner retrieval instructions. The existing separate artifact download/checksum job remains required. No manual installation requested.
