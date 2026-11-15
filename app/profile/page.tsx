@@ -31,7 +31,7 @@ export default async function ProfilePage() {
     return (
       <main className='min-h-screen bg-[#050303] p-4 text-white md:p-6'>
         <div className='mx-auto max-w-2xl'>
-          <h1 className='text-3xl font-bold'>Profile</h1>
+          <h1 className='text-3xl font-bold'>My Citizenship Profile</h1>
           <p className='mt-4 text-red-400'>Error loading profile: {error.message}</p>
         </div>
       </main>
@@ -47,7 +47,7 @@ export default async function ProfilePage() {
           </p>
 
           <h1 className='mt-3 text-3xl font-bold md:text-5xl'>
-            Profile Settings
+            My Citizenship Profile
           </h1>
 
           <p className='mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base'>

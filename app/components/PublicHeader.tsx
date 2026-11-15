@@ -25,7 +25,7 @@ export default function PublicHeader() {
         </Link>
         <nav aria-label="Public navigation" className="hidden items-center gap-1 lg:flex">
           {navigation.map((link) => <Link key={link.href} href={link.href} className="rounded-xl px-4 py-2 text-sm text-[#dfd1cf] hover:bg-white/[.08]">{link.label}</Link>)}
-          <Link href="/login" className="ml-2 rounded-full border border-[#cfaa72]/45 bg-[#b28d53]/15 px-5 py-2 text-sm font-semibold text-[#edd2a1]">Member sign in</Link>
+          <Link href="/login" className="ml-2 rounded-full border border-[#cfaa72]/45 bg-[#b28d53]/15 px-5 py-2 text-sm font-semibold text-[#edd2a1]">Already a Citizen? Sign In</Link>
         </nav>
         <button type="button" onClick={() => setOpen((value) => !value)} aria-controls="kc-public-menu" aria-expanded={open}
           aria-label={open ? 'Close navigation' : 'Open navigation'}
@@ -40,7 +40,7 @@ export default function PublicHeader() {
           <Link href="/public/contact" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm text-[#e2d3ce]">Contact</Link>
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
             <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl border border-[#cfaa72]/35 p-3 text-center text-sm font-semibold text-[#f1d5a4]">Sign in</Link>
-            <Link href="/register" onClick={() => setOpen(false)} className="rounded-xl bg-[#caa76a] p-3 text-center text-sm font-semibold text-[#180d0d]">Join</Link>
+            <Link href="/register" onClick={() => setOpen(false)} className="rounded-xl bg-[#caa76a] p-3 text-center text-sm font-semibold text-[#180d0d]">Become a Citizen</Link>
           </div>
         </nav>
       )}
