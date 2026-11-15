@@ -1,22 +1,10 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
-import { createClient } from '../../lib/supabase/client'
+import { createClient, supabaseConfigured } from '../../lib/supabase/client'
 
-const getURL = () => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (siteUrl) {
-    return siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`
-  }
-
-  if (typeof window !== 'undefined') {
-    return `${window.location.origin}/`
-  }
-
-  return 'http://localhost:3000/'
-}
+const getURL = () => `${window.location.origin}/`
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
@@ -30,17 +18,23 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${getURL()}auth/callback?next=/update-password`,
-    })
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getURL()}auth/callback?next=/update-password`,
+      })
 
-    if (error) {
-      setMessage(error.message)
+      if (error) {
+        setMessage(error.message)
+        setLoading(false)
+        return
+      }
+
+      setMessage('Password reset email sent. Check your inbox and open the newest reset link.')
+    } catch {
+      setMessage('Unable to reach sign-in services. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    setMessage('Password reset email sent. Check your inbox and open the newest reset link.')
     setLoading(false)
   }
 
@@ -60,7 +54,7 @@ export default function ForgotPasswordPage() {
 
         <button
           type='submit'
-          disabled={loading}
+          disabled={loading || !supabaseConfigured}
           className='w-full rounded bg-orange-600 p-3 text-white disabled:opacity-50'
         >
           {loading ? 'Sending reset email...' : 'Send reset email'}

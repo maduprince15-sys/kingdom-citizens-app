@@ -5,12 +5,16 @@ import { safeNextPath } from '../../../lib/auth/safe-next'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const tokenHash = searchParams.get('token_hash')
+  const type = searchParams.get('type')
   const next = safeNextPath(searchParams.get('next'))
 
-  if (code) {
+  if (code || (tokenHash && (type === 'email' || type === 'recovery' || type === 'signup'))) {
     const supabase = await createClient()
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : await supabase.auth.verifyOtp({ token_hash: tokenHash!, type: type as 'email' | 'recovery' | 'signup' })
 
     if (!error) {
       const {
@@ -23,6 +27,11 @@ export async function GET(request: Request) {
       // user lookup or silently skip the required profile setup.
       if (authenticatedUserError || !user) {
         return NextResponse.json({ error: 'Could not verify member sign-in.' }, { status: 503 })
+      }
+
+      // Recovery must remain available even when profile provisioning is down.
+      if (type === 'recovery' || next === '/update-password') {
+        return NextResponse.redirect(new URL('/update-password', origin))
       }
 
       const { data: existingProfile, error: profileLookupError } = await supabase

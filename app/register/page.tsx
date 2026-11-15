@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -49,11 +49,11 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [checkingUser, setCheckingUser] = useState(true)
+  const [checkingUser, setCheckingUser] = useState(supabaseConfigured)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!supabaseConfigured) { setCheckingUser(false); return }
+    if (!supabaseConfigured) return
     async function checkUser() {
       const {
         data: { user },
@@ -84,27 +84,39 @@ export default function RegisterPage() {
       return
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${getURL()}auth/callback`,
-        data: {
-          full_name: fullName,
-          birthday_month: monthNumber,
-          birthday_day: dayNumber,
-          show_birthday: Boolean(monthNumber && dayNumber),
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${getURL()}auth/callback`,
+          data: {
+            full_name: fullName,
+            birthday_month: monthNumber,
+            birthday_day: dayNumber,
+            show_birthday: Boolean(monthNumber && dayNumber),
+          },
         },
-      },
-    })
+      })
 
-    if (error) {
-      setMessage(error.message)
+      if (error) {
+        setMessage(error.message)
+        setLoading(false)
+        return
+      }
+
+      if (data.session) {
+        router.replace('/dashboard')
+        router.refresh()
+        return
+      }
+
+      setMessage('Account created successfully. Check your email and confirm your signup.')
+    } catch {
+      setMessage('Unable to reach sign-in services. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    setMessage('Account created successfully. Check your email and confirm your signup.')
     setLoading(false)
   }
 
@@ -131,7 +143,7 @@ export default function RegisterPage() {
 
 
             <h1 className='mt-2 text-3xl font-black'>
-              Create Account
+              Become a Citizen
             </h1>
 
             <p className='mt-3 text-sm leading-6 text-gray-300'>
@@ -239,7 +251,7 @@ export default function RegisterPage() {
                 disabled={loading || !supabaseConfigured}
                 className='w-full rounded-xl bg-[#c7a366] p-3 font-bold text-[#1b0d0e] hover:bg-[#e6c78f] disabled:opacity-50'
               >
-                {loading ? 'Creating account...' : 'Create Account'}
+                {loading ? 'Creating account...' : 'Become a Citizen'}
               </button>
             </form>
 
@@ -259,9 +271,9 @@ export default function RegisterPage() {
 
             <div className='mt-6 space-y-3 text-center text-sm'>
               <p className='text-gray-300'>
-                Already have an account?{' '}
+                Already a Citizen?{' '}
                 <Link href='/login' className='font-bold text-yellow-300 underline'>
-                  Login
+                  Sign In
                 </Link>
               </p>
 

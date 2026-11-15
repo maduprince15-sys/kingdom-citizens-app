@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -13,11 +13,11 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [checkingUser, setCheckingUser] = useState(true)
+  const [checkingUser, setCheckingUser] = useState(supabaseConfigured)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!supabaseConfigured) { setCheckingUser(false); return }
+    if (!supabaseConfigured) return
     async function checkUser() {
       const {
         data: { user },
@@ -39,19 +39,25 @@ export default function LoginPage() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) {
-      setMessage(error.message)
+      if (error) {
+        setMessage(error.message)
+        setLoading(false)
+        return
+      }
+
+      router.push('/dashboard')
+      router.refresh()
+    } catch {
+      setMessage('Unable to reach sign-in services. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    router.push('/dashboard')
-    router.refresh()
   }
 
   if (checkingUser) {
@@ -77,7 +83,7 @@ export default function LoginPage() {
 
 
             <h1 className='mt-2 text-3xl font-black'>
-              Member sign in
+              Already a Citizen? Sign In
             </h1>
 
             <p className='mt-3 text-sm leading-6 text-gray-300'>
@@ -147,7 +153,7 @@ export default function LoginPage() {
               <p className='text-gray-300'>
                 Don&apos;t have an account?{' '}
                 <Link href='/register' className='font-bold text-yellow-300 underline'>
-                  Register
+                  Become a Citizen
                 </Link>
               </p>
 

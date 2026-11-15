@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createClient, supabaseConfigured } from '../../lib/supabase/client'
 import { startAndroidGoogleOAuth } from '../../lib/android-google-auth'
 import { isAndroidNativeApp } from '../../lib/mobile-runtime'
@@ -23,15 +23,11 @@ const getURL = () => {
 
 export default function GoogleLoginButton() {
   const supabase = useMemo(() => createClient(), [])
-  const [androidNative, setAndroidNative] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    setAndroidNative(isAndroidNativeApp())
-  }, [])
-
   async function handleGoogleLogin() {
+    const androidNative = isAndroidNativeApp()
     setLoading(true)
     setMessage(androidNative ? 'Opening Google sign-in...' : null)
 
