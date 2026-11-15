@@ -23,8 +23,6 @@ export default function AndroidAuthReturnHandler() {
     let listener: { remove: () => Promise<void> } | undefined
 
     async function handleUrl(url: string) {
-      if (!url.startsWith('kingdomcitizens://auth/callback')) return
-
       if (DEV) setStatus('Waiting for Android return...')
 
       const result = await handleAndroidGoogleCallback(supabase, url)

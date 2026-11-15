@@ -13,10 +13,16 @@ type NativeProfileSetupResult =
   | { ok: false; error: string }
 
 export async function startAndroidGoogleOAuth(supabase: SupabaseClient) {
+  const { App } = await import('@capacitor/app')
+  const { id } = await App.getInfo()
+  // Separate installed apps must not compete for the same OAuth deep link.
+  const redirectTo = id === 'com.kingdomcitizens.app.beta'
+    ? 'kingdomcitizensbeta://auth/callback'
+    : ANDROID_GOOGLE_REDIRECT_URL
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: ANDROID_GOOGLE_REDIRECT_URL,
+      redirectTo,
       skipBrowserRedirect: true,
     },
   })
@@ -35,7 +41,7 @@ export async function handleAndroidGoogleCallback(
   let parsed: URL
   try { parsed = new URL(callbackUrl) } catch { return { handled: false } }
 
-  if (parsed.protocol !== 'kingdomcitizens:' || parsed.hostname !== 'auth') {
+  if (!['kingdomcitizens:', 'kingdomcitizensbeta:'].includes(parsed.protocol) || parsed.hostname !== 'auth') {
     return { handled: false }
   }
 

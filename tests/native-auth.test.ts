@@ -20,3 +20,6 @@ it('requires a resulting app session', async () => {
   auth.getSession.mockResolvedValue({ data: { session: null } })
   expect(await handleAndroidGoogleCallback(client, 'kingdomcitizens://auth/callback?code=test')).toEqual({ handled: true, error: expect.any(String) })
 })
+it('accepts the isolated beta callback scheme', async () => {
+  expect(await handleAndroidGoogleCallback(client, 'kingdomcitizensbeta://auth/callback?code=beta')).toEqual({ handled: true })
+})
