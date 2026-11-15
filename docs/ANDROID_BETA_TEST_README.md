@@ -15,7 +15,7 @@ The Android debug beta is a separate installable application. It does **not** ov
 
 ## Consolidated candidate — 15 November 2026
 
-Web source is pinned to development commit `47304ace5f0690ddd52c6578c9fc84c40014d647`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
+Web source is pinned to development commit `8235dd365b68dfd72dd2e1b1fee0dc089c71fc70`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
 
 Later ordered acceptance (not a request to test now):
 
@@ -45,3 +45,9 @@ The opt-in `npm run test:two-citizen` runner exits BLOCKED without synthetic iso
 This candidate incorporates 155 tests, including actual Web Crypto recipient round trips and disposable local Postgres RLS tests. The v2 envelope remains unwired pending authenticated enrollment/persistence/revocation/recovery and live authorization verification. Legacy sender-only sends now fail closed rather than create more raw localStorage keys; drafts are retained. Private attachments remain disabled pending isolated Storage API/RLS verification; their guarded migration was exercised only in disposable memory, never applied to Supabase.
 
 The build verifies APK signing and SHA-256, then a separate Actions job downloads the uploaded artifact, rechecks SHA-256 and ZIP integrity, and records public integrity evidence in its job summary. A passing job establishes retrieval on that runner, not device installation or removal of the local proxy's Azure-host 403. Preserve independent beta identity/logo/OAuth; do not request manual installation yet.
+
+## Boundary-validation and integration-evidence candidate
+
+Current candidate: 184 tests, bounded/canonical recipient-envelope parsing, access rechecks after attachment reads, generic no-store storage errors, and integration checks that no longer treat network/schema/expired-session failures as privacy passes. Service-role/secret keys are rejected for ordinary-Citizen integration tests.
+
+The existing separate Actions download/checksum job remains required. Genuine backend/account, recipient enrollment/recovery, hosted RLS/Storage and device verification remain BLOCKED; candidate crypto is not enabled, attachments stay disabled and no installation testing is requested.
