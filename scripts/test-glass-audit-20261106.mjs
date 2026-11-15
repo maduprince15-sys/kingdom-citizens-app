@@ -32,6 +32,26 @@ assert.ok(dashboard.includes('Account options'), 'Advanced account controls behi
 assert.ok(login.includes('useMemo(() => createClient(), [])') && register.includes('useMemo(() => createClient(), [])'), 'Stable Supabase clients')
 assert.ok(register.includes('Birthday (optional)') && register.includes('Boolean(monthNumber) !== Boolean(dayNumber)'), 'Birthdays optional and validated')
 assert.ok(callback.includes('safeNextPath(searchParams.get'), 'Callback return paths validated')
+assert.ok(!callback.includes('\\n'), 'OAuth callback must contain real line breaks, never literal escaped newline tokens')
+assert.ok(callback.includes('if (!existingProfile)') && callback.includes(".from('profiles').insert("), 'OAuth creates missing profiles without overwriting existing profile data')
+assert.ok(!callback.includes(".from('profiles').upsert(") && !callback.includes("role: existingProfile?.role"), 'OAuth cannot rewrite existing roles or profile fields')
+assert.ok(callback.includes('error: profileLookupError') && callback.includes('if (profileLookupError)') && callback.includes('status: 503'),
+  'OAuth must not treat a failed profile lookup as an absent profile')
+assert.ok(callback.includes('error: profileInsertError') && callback.includes('if (profileInsertError)'),
+  'OAuth must not redirect as success after failed member profile creation')
+assert.ok(callback.indexOf('if (profileLookupError)') < callback.indexOf('if (!existingProfile)'),
+  'OAuth profile lookup error must stop processing before attempting creation')
+
+assert.ok(callback.includes('error: authenticatedUserError') &&
+  callback.includes('if (authenticatedUserError || !user)'),
+  'OAuth must not claim successful login without a verified authenticated user')
+assert.ok(callback.indexOf('if (authenticatedUserError || !user)') < callback.indexOf('if (!existingProfile)'),
+  'OAuth must verify the authenticated member before profile setup')
+const googleButton = read('app/components/GoogleLoginButton.tsx')
+assert.ok(googleButton.includes('const { error } = await supabase.auth.signInWithOAuth({') &&
+  googleButton.includes('if (error)') && googleButton.includes('setLoading(false)'),
+  'Returned Google OAuth errors must be surfaced without leaving the button loading')
+
 assert.ok(safe.includes("value.startsWith('//')"), 'Protocol-relative redirects blocked')
 assert.ok(report.includes('CRITICAL') && report.includes('has_column_privilege'), 'Document actual direct-role-edit finding')
 const previewClient = read('lib/supabase/client.ts')
@@ -68,3 +88,47 @@ for (const p of ['app/dashboard/page.tsx','app/birthdays/page.tsx','app/members/
 assert.ok(read('app/api/messages/send/route.ts').includes('process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null'),
  'Preview messaging must not require an unavailable admin key')
 console.log('PASS Kingdom Citizens UI/auth/static audit contracts.')
+
+// Preview authentication must never silently redirect users to production.
+for (const path of ['app/components/GoogleLoginButton.tsx', 'app/register/page.tsx']) {
+  const source = read(path)
+  const origin = source.indexOf("if (typeof window !== 'undefined')")
+  const configured = source.indexOf('const siteUrl = process.env.NEXT_PUBLIC_SITE_URL')
+  assert.ok(origin >= 0 && configured > origin,
+    `${path}: browser origin must take precedence over configured production site URL`)
+  assert.ok(source.includes('window.location.origin'),
+    `${path}: OAuth callback must return to initiating deployment`)
+}
+
+
+// Reject malformed/oversized encrypted-message envelopes before database writes.
+const messageSend = read('app/api/messages/send/route.ts')
+assert.ok(messageSend.includes('MAX_MESSAGE_BYTES = 64 * 1024'), 'Bound incoming message bytes')
+assert.ok(messageSend.includes("await request.text()"), 'Validate raw payload length before JSON parsing')
+assert.ok(messageSend.includes("status: 413"), 'Reject oversized encrypted messages')
+assert.ok(messageSend.includes("typeof bodyData.encryptedBody === 'string'"), 'Reject non-string encrypted payloads')
+assert.ok(messageSend.includes("uuid.test(recipientId)"), 'Reject malformed member identifiers')
+assert.ok(messageSend.includes("uuid.test(parentMessageId)"), 'Reject malformed reply identifiers')
+assert.ok(messageSend.includes("parsed.payload.ciphertext.length <= 60_000"), 'Bound ciphertext length')
+
+assert.ok(messageSend.includes("Broadcasts cannot reply to private messages."),
+  'Broadcasts must not attach to unrelated private threads')
+assert.ok(messageSend.includes(".select('sender_id, recipient_id')") &&
+  messageSend.includes(".eq('id', parentMessageId)") &&
+  messageSend.includes(".maybeSingle()"),
+  'Resolve reply parent under sender RLS before insertion')
+assert.ok(messageSend.includes('parent.sender_id === user.id && parent.recipient_id === recipientId') &&
+  messageSend.includes('parent.sender_id === recipientId && parent.recipient_id === user.id'),
+  'Reply parent must belong to the same two participants in either direction')
+assert.ok(messageSend.indexOf("if (parentMessageId !== null) {\n    // Check the parent") <
+  messageSend.indexOf("await supabase.from('app_messages').insert({"),
+  'Reply authorization must happen before database insertion')
+
+// Never expose Supabase/PostgREST internal messages to public API callers.
+assert.ok(!messageSend.includes('error: recipientsError.message'),
+  'Broadcast recipient lookup errors must not leak database details')
+assert.ok(!messageSend.includes('error: insertError.message'),
+  'Message insertion errors must not leak database details')
+assert.ok(messageSend.includes("error: 'Could not load broadcast recipients.'") &&
+  messageSend.includes("error: 'Could not deliver the message.'"),
+  'Message API returns safe generic errors while preserving failure status')

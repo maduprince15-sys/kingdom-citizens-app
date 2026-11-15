@@ -5,44 +5,69 @@ import { safeNextPath } from '../../../lib/auth/safe-next'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const tokenHash = searchParams.get('token_hash')
+  const type = searchParams.get('type')
   const next = safeNextPath(searchParams.get('next'))
 
-  if (code) {
+  if (code || (tokenHash && (type === 'email' || type === 'recovery' || type === 'signup'))) {
     const supabase = await createClient()
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : await supabase.auth.verifyOtp({ token_hash: tokenHash!, type: type as 'email' | 'recovery' | 'signup' })
 
     if (!error) {
       const {
         data: { user },
+        error: authenticatedUserError,
       } = await supabase.auth.getUser()
 
-      if (user) {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id, role, phone, birthday_month, birthday_day, show_birthday')
-          .eq('id', user.id)
-          .maybeSingle()
+      // A code exchange alone does not prove that an authenticated member
+      // session is available. Never redirect to the dashboard on a failed
+      // user lookup or silently skip the required profile setup.
+      if (authenticatedUserError || !user) {
+        return NextResponse.json({ error: 'Could not verify member sign-in.' }, { status: 503 })
+      }
 
-        const birthdayMonth =
-          user.user_metadata?.birthday_month !== undefined &&
-          user.user_metadata?.birthday_month !== null
-            ? Number(user.user_metadata.birthday_month)
-            : existingProfile?.birthday_month ?? null
+      // Recovery must remain available even when profile provisioning is down.
+      if (type === 'recovery' || next === '/update-password') {
+        return NextResponse.redirect(new URL('/update-password', origin))
+      }
 
-        const birthdayDay =
-          user.user_metadata?.birthday_day !== undefined &&
-          user.user_metadata?.birthday_day !== null
-            ? Number(user.user_metadata.birthday_day)
-            : existingProfile?.birthday_day ?? null
+      const { data: existingProfile, error: profileLookupError } = await supabase
+        .from('profiles')
+        .select('id, role, phone, birthday_month, birthday_day, show_birthday')
+        .eq('id', user.id)
+        .maybeSingle()
 
-        const showBirthday =
-          user.user_metadata?.show_birthday !== undefined &&
-          user.user_metadata?.show_birthday !== null
-            ? Boolean(user.user_metadata.show_birthday)
-            : existingProfile?.show_birthday ?? true
+      // A failed RLS/network lookup is not evidence that a profile is absent.
+      // Never try to recreate or overwrite an existing staff profile.
+      if (profileLookupError) {
+        return NextResponse.json({ error: 'Member profile temporarily unavailable.' }, { status: 503 })
+      }
 
-        await supabase.from('profiles').upsert({
+      const birthdayMonth =
+        user.user_metadata?.birthday_month !== undefined &&
+        user.user_metadata?.birthday_month !== null
+          ? Number(user.user_metadata.birthday_month)
+          : existingProfile?.birthday_month ?? null
+
+      const birthdayDay =
+        user.user_metadata?.birthday_day !== undefined &&
+        user.user_metadata?.birthday_day !== null
+          ? Number(user.user_metadata.birthday_day)
+          : existingProfile?.birthday_day ?? null
+
+      const showBirthday =
+        user.user_metadata?.show_birthday !== undefined &&
+        user.user_metadata?.show_birthday !== null
+          ? Boolean(user.user_metadata.show_birthday)
+          : existingProfile?.show_birthday ?? true
+
+      // Existing staff roles are managed through trusted administrative paths.
+      // OAuth must never rewrite a role or overwrite existing profile details.
+      if (!existingProfile) {
+        const { error: profileInsertError } = await supabase.from('profiles').insert({
           id: user.id,
           email: user.email,
           full_name:
@@ -51,15 +76,19 @@ export async function GET(request: Request) {
             user.user_metadata?.display_name ||
             'New Member',
           phone:
-            existingProfile?.phone ||
             user.user_metadata?.phone_number ||
             user.user_metadata?.phone ||
             null,
           birthday_month: birthdayMonth,
           birthday_day: birthdayDay,
           show_birthday: showBirthday,
-          role: existingProfile?.role || 'member',
+          role: 'member',
         })
+
+        if (profileInsertError) {
+          // Do not report successful onboarding when the profile was not saved.
+          return NextResponse.json({ error: 'Could not finish member profile setup.' }, { status: 503 })
+        }
       }
 
       return NextResponse.redirect(new URL(next, origin))

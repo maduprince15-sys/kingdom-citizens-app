@@ -32,13 +32,14 @@ export async function handleAndroidGoogleCallback(
   supabase: SupabaseClient,
   callbackUrl: string
 ): Promise<NativeAuthResult> {
-  const parsed = new URL(callbackUrl)
+  let parsed: URL
+  try { parsed = new URL(callbackUrl) } catch { return { handled: false } }
 
   if (parsed.protocol !== 'kingdomcitizens:' || parsed.hostname !== 'auth') {
     return { handled: false }
   }
 
-  if (!parsed.pathname.startsWith('/callback')) {
+  if (parsed.pathname !== '/callback') {
     return { handled: false }
   }
 

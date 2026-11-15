@@ -42,7 +42,7 @@ export default async function HomePage() {
             </h1>
             <p className="mt-6 max-w-lg text-base leading-8 text-[#dfd3cf]">Already seated in heaven, walking here on earth. Growing together in Christ through Scripture, prayer and fellowship.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/register" className="rounded-full bg-[#c7a366] px-6 py-3 text-sm font-bold text-[#1a0a0c] hover:bg-[#e2c48a]">Join the community</Link>
+              <Link href="/register" className="rounded-full bg-[#c7a366] px-6 py-3 text-sm font-bold text-[#1a0a0c] hover:bg-[#e2c48a]">Become a Citizen</Link>
               <Link href="/public/posts" className="rounded-full border border-[#d8bb83]/35 bg-white/[.04] px-6 py-3 text-sm font-semibold text-[#f1d8a7]">Explore teachings</Link>
             </div>
           </div>
@@ -57,7 +57,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-14">
         <div className="mb-6 flex items-end justify-between gap-3">
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Explore our community</h2>
-          <Link href="/login" className="text-sm font-semibold text-[#e2c28e]">Member area</Link>
+          <Link href="/login" className="text-sm font-semibold text-[#e2c28e]">Citizen area</Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {sections.map((item) => (

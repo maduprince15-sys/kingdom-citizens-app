@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { canDeleteUsers, canManageRoles } from '../../lib/permissions'
@@ -58,7 +58,7 @@ export default async function MembersPage() {
     return (
       <main className='min-h-screen bg-[#050303] p-4 text-white md:p-8'>
         <div className='mx-auto max-w-6xl'>
-          <h1 className='text-3xl font-bold'>Members</h1>
+          <h1 className='text-3xl font-bold'>Fellow Citizens</h1>
           <p className='mt-4 rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
             Error loading members: {error.message}
           </p>
@@ -78,7 +78,7 @@ export default async function MembersPage() {
               </p>
 
               <h1 className='mt-3 text-4xl font-black md:text-6xl'>
-                Members
+                Fellow Citizens
               </h1>
 
               <p className='mt-3 max-w-3xl text-sm leading-7 text-gray-300'>

@@ -26,18 +26,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not load sender profile.' }, { status: 400 })
   }
 
-  const bodyData = await request.json()
-  const recipientId = bodyData?.recipientId
-  const subject = String(bodyData?.subject || '').trim()
-  const encryptedBody = String(bodyData?.encryptedBody || '').trim()
-  const parentMessageId = bodyData?.parentMessageId || null
-
-  if (!subject || !encryptedBody || !isEncryptedMessageBody(encryptedBody)) {
-    return NextResponse.json({ error: 'Subject and message are required.' }, { status: 400 })
+  // Enforce a bounded JSON envelope before parsing or querying recipients.
+  // Never log, echo, or store an invalid encrypted payload.
+  const MAX_MESSAGE_BYTES = 64 * 1024
+  if (Number(request.headers.get('content-length') || 0) > MAX_MESSAGE_BYTES) {
+    return NextResponse.json({ error: 'Message exceeds the size limit.' }, { status: 413 })
+  }
+  let bodyData: Record<string, unknown>
+  try {
+    const raw = await request.text()
+    if (new TextEncoder().encode(raw).byteLength > MAX_MESSAGE_BYTES) {
+      return NextResponse.json({ error: 'Message exceeds the size limit.' }, { status: 413 })
+    }
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Invalid JSON object')
+    }
+    bodyData = parsed as Record<string, unknown>
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON message.' }, { status: 400 })
   }
 
-  if (!recipientId) {
-    return NextResponse.json({ error: 'Recipient is required.' }, { status: 400 })
+  const recipientId = bodyData.recipientId
+  const subject = typeof bodyData.subject === 'string' ? bodyData.subject.trim() : ''
+  const encryptedBody = typeof bodyData.encryptedBody === 'string' ? bodyData.encryptedBody.trim() : ''
+  const parentMessageId = bodyData.parentMessageId == null ? null : bodyData.parentMessageId
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+  if (!subject || subject.length > 160 || !encryptedBody || !isEncryptedMessageBody(encryptedBody)) {
+    return NextResponse.json({ error: 'A valid subject and encrypted message are required.' }, { status: 400 })
+  }
+
+  if (recipientId !== 'all' && (typeof recipientId !== 'string' || !uuid.test(recipientId))) {
+    return NextResponse.json({ error: 'A valid recipient is required.' }, { status: 400 })
+  }
+  if (parentMessageId !== null && (typeof parentMessageId !== 'string' || !uuid.test(parentMessageId))) {
+    return NextResponse.json({ error: 'Invalid reply reference.' }, { status: 400 })
   }
 
   const senderRole = senderProfile.role || 'member'
@@ -54,6 +78,11 @@ export async function POST(request: Request) {
   const admin = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null
 
   if (recipientId === 'all') {
+    // A broadcast is a new thread for each recipient. Never attach it to
+    // an unrelated private conversation, even when sent by an owner.
+    if (parentMessageId !== null) {
+      return NextResponse.json({ error: 'Broadcasts cannot reply to private messages.' }, { status: 400 })
+    }
     if (!senderIsOwnerOrAdmin) {
       return NextResponse.json(
         { error: 'Only owners and admins can broadcast to all members.' },
@@ -66,7 +95,7 @@ export async function POST(request: Request) {
       .neq('id', user.id)
 
     if (recipientsError) {
-      return NextResponse.json({ error: recipientsError.message }, { status: 400 })
+      return NextResponse.json({ error: 'Could not load broadcast recipients.' }, { status: 503 })
     }
 
     const rows =
@@ -88,7 +117,7 @@ export async function POST(request: Request) {
       .insert(rows)
 
     if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 400 })
+      return NextResponse.json({ error: 'Could not deliver the message.' }, { status: 503 })
     }
 
     const notificationRows =
@@ -129,6 +158,24 @@ export async function POST(request: Request) {
     )
   }
 
+  if (parentMessageId !== null) {
+    // Check the parent using the signed-in user's RLS-scoped client.
+    // UUID syntax alone does not prove a reply belongs to this conversation.
+    const { data: parent, error: parentError } = await supabase
+      .from('app_messages')
+      .select('sender_id, recipient_id')
+      .eq('id', parentMessageId)
+      .maybeSingle()
+
+    if (parentError || !parent ||
+      !(
+        (parent.sender_id === user.id && parent.recipient_id === recipientId) ||
+        (parent.sender_id === recipientId && parent.recipient_id === user.id)
+      )) {
+      return NextResponse.json({ error: 'Reply reference is not in this conversation.' }, { status: 403 })
+    }
+  }
+
   const { error: insertError } = await supabase.from('app_messages').insert({
     sender_id: user.id,
     sender_name: senderName,
@@ -139,7 +186,7 @@ export async function POST(request: Request) {
   })
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 400 })
+    return NextResponse.json({ error: 'Could not deliver the message.' }, { status: 503 })
   }
 
   if (admin) {
@@ -174,7 +221,10 @@ function isEncryptedMessageBody(value: string) {
       parsed.payload?.version === 1 &&
       parsed.payload?.algorithm === 'AES-GCM' &&
       typeof parsed.payload.ciphertext === 'string' &&
-      typeof parsed.payload.iv === 'string'
+      parsed.payload.ciphertext.length > 0 &&
+      parsed.payload.ciphertext.length <= 60_000 &&
+      typeof parsed.payload.iv === 'string' &&
+      /^[A-Za-z0-9+/_-]{12,64}={0,2}$/.test(parsed.payload.iv)
     )
   } catch {
     return false

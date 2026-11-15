@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import LogoutButton from './LogoutButton'
@@ -25,12 +25,12 @@ function getMonthName(month: number | null | undefined) {
   return months[month - 1]
 }
 
-function getText(value: any) {
+function getText(value: unknown) {
   if (!value) return null
   return String(value)
 }
 
-function getDateText(item: any) {
+function getDateText(item: { created_at?: string | null }) {
   const date = item.created_at || null
   return date
 }
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
     .limit(3)
 
   const birthdaySlides =
-    birthdayProfiles?.map((profile: any) => ({
+    birthdayProfiles?.map((profile: { id: string; full_name?: string | null; email?: string | null; avatar_url?: string | null; birthday_month?: number | null; birthday_day?: number | null }) => ({
       id: `birthday-${profile.id}`,
       type: 'birthday',
       label: "Today's Birthday",
@@ -109,7 +109,7 @@ export default async function DashboardPage() {
     })) || []
 
   const announcementSlides =
-    pinnedAnnouncements?.map((item: any) => ({
+    pinnedAnnouncements?.map((item) => ({
       id: `announcement-${item.id}`,
       type: 'announcement',
       label: 'Pinned Announcement',
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
     })) || []
 
   const postSlides =
-    pinnedPosts?.map((item: any) => ({
+    pinnedPosts?.map((item) => ({
       id: `post-${item.id}`,
       type: 'post',
       label: 'Pinned Post',
@@ -144,10 +144,10 @@ export default async function DashboardPage() {
 
   const memberCards = [
     {
-      title: 'Profile',
+      title: 'My Citizenship Profile',
       description: 'Update your full name, phone number, email address, birthday details, and member information.',
       href: '/profile',
-      label: 'Member profile',
+      label: 'Citizenship profile',
     },
     {
       title: `Notifications${unreadNotificationCount ? ` (${unreadNotificationCount} unread)` : ''}`,
@@ -212,7 +212,7 @@ export default async function DashboardPage() {
   ]
   const ownerCards = [
     {
-      title: 'Members',
+      title: 'Fellow Citizens',
       description: 'Govern admin appointments and remove admin privileges when needed.',
       href: '/members',
       label: 'Governance',
@@ -221,7 +221,7 @@ export default async function DashboardPage() {
 
   const adminCards = [
     {
-      title: 'Members',
+      title: 'Fellow Citizens',
       description: 'View members and appoint lower offices such as finance, moderator, teacher, and member.',
       href: '/members',
       label: 'Manage community',
@@ -449,7 +449,7 @@ export default async function DashboardPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#c5a46c]">The Kingdom Citizens</p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Welcome, {displayName}</h1>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Welcome, Citizen {displayName}</h1>
             <p className="mt-1 text-xs capitalize text-[#bdb0ab]">{role} account</p>
           </div>
           <div className="flex flex-wrap gap-2">

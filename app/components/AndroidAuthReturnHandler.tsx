@@ -76,7 +76,7 @@ export default function AndroidAuthReturnHandler() {
     }
   }, [router, supabase])
 
-  if (!DEV || !status) return null
+  if (!status) return null
 
   return (
     <div className='fixed bottom-3 left-3 right-3 z-50 rounded border border-yellow-700 bg-black/90 px-4 py-3 text-sm text-yellow-200 shadow-lg md:left-auto md:right-3 md:max-w-sm'>

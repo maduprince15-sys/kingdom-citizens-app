@@ -1,19 +1,21 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createClient, supabaseConfigured } from '../../lib/supabase/client'
 import { startAndroidGoogleOAuth } from '../../lib/android-google-auth'
 import { isAndroidNativeApp } from '../../lib/mobile-runtime'
 
 const getURL = () => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (siteUrl) {
-    return siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`
-  }
-
+  // OAuth and email confirmation must return to the same deployment that
+  // initiated sign-in. A production NEXT_PUBLIC_SITE_URL on a Preview build
+  // must not silently move the user into the production environment.
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/`
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (siteUrl) {
+    return siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`
   }
 
   return 'http://localhost:3000/'
@@ -21,15 +23,11 @@ const getURL = () => {
 
 export default function GoogleLoginButton() {
   const supabase = useMemo(() => createClient(), [])
-  const [androidNative, setAndroidNative] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    setAndroidNative(isAndroidNativeApp())
-  }, [])
-
   async function handleGoogleLogin() {
+    const androidNative = isAndroidNativeApp()
     setLoading(true)
     setMessage(androidNative ? 'Opening Google sign-in...' : null)
 
@@ -47,12 +45,18 @@ export default function GoogleLoginButton() {
     }
 
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${getURL()}auth/callback`,
         },
       })
+      // Supabase returns OAuth initiation failures in the result instead of
+      // throwing them. Surface the error rather than leaving a stuck spinner.
+      if (error) {
+        setMessage(error.message || 'Google sign-in failed.')
+        setLoading(false)
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Google sign-in failed.')
       setLoading(false)
