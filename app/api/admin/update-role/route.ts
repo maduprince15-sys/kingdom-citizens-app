@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient as createRequestClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import {
@@ -34,7 +34,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json()
+  let body
+  try { body = await request.json() } catch {
+    return NextResponse.json({ error: 'Invalid role request.' }, { status: 400 })
+  }
   const targetUserId = body?.targetUserId
   const newRole = body?.newRole
 
@@ -117,12 +120,11 @@ export async function POST(request: Request) {
       .eq('id', targetUserId)
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 400 })
+      return NextResponse.json({ error: 'Could not update the role.' }, { status: 503 })
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Role update failed.'
-    return NextResponse.json({ error: message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Role service temporarily unavailable.' }, { status: 503 })
   }
 }

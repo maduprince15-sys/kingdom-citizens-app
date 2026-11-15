@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '../../../../lib/supabase/server'
-import { createAdminClient } from '../../../../lib/supabase/admin'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -14,7 +13,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
+  let body
+  try { body = await request.json() } catch {
+    return NextResponse.json({ error: 'Invalid chat request.' }, { status: 400 })
+  }
   const messageId = body?.messageId
 
   if (!messageId) {
@@ -31,9 +33,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not load your profile.' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
-
-  const { data: chatMessage, error: messageError } = await admin
+  // Resolve the message under the actor's RLS before any privileged operation.
+  const { data: chatMessage, error: messageError } = await supabase
     .from('chat_messages')
     .select('id, sender_id, is_deleted')
     .eq('id', messageId)
@@ -41,10 +42,6 @@ export async function POST(request: Request) {
 
   if (messageError || !chatMessage) {
     return NextResponse.json({ error: 'Chat message not found.' }, { status: 404 })
-  }
-
-  if (chatMessage.is_deleted) {
-    return NextResponse.json({ success: true })
   }
 
   const role = profile.role || 'member'
@@ -58,7 +55,9 @@ export async function POST(request: Request) {
     )
   }
 
-  const { error: updateError } = await admin
+  if (chatMessage.is_deleted) return NextResponse.json({ success: true })
+
+  const { error: updateError } = await supabase
     .from('chat_messages')
     .update({
       is_deleted: true,
@@ -68,7 +67,7 @@ export async function POST(request: Request) {
     .eq('id', messageId)
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 400 })
+    return NextResponse.json({ error: 'Could not delete the chat message.' }, { status: 503 })
   }
 
   return NextResponse.json({ success: true })

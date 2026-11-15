@@ -21,12 +21,12 @@ function getMonthName(month: number | null | undefined) {
   return months[month - 1]
 }
 
-function getText(value: any) {
+function getText(value: unknown) {
   if (!value) return null
   return String(value)
 }
 
-function getDateText(item: any) {
+function getDateText(item: { event_date?: string | null; meeting_date?: string | null; project_date?: string | null; created_at?: string | null; event_time?: string | null; meeting_time?: string | null }) {
   const date =
     item.event_date ||
     item.meeting_date ||
@@ -49,8 +49,7 @@ export default async function NoticeBoardPage() {
   const currentDay = today.getDate()
 
   const { data: birthdayProfiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, birthday_month, birthday_day, show_birthday, avatar_url')
+    .rpc('member_directory')
     .eq('show_birthday', true)
     .eq('birthday_month', currentMonth)
     .eq('birthday_day', currentDay)
@@ -91,11 +90,11 @@ export default async function NoticeBoardPage() {
     .limit(3)
 
   const birthdaySlides =
-    birthdayProfiles?.map((profile: any) => ({
+    birthdayProfiles?.map((profile: { id: string; full_name?: string | null; birthday_month?: number | null; birthday_day?: number | null; avatar_url?: string | null }) => ({
       id: `birthday-${profile.id}`,
       type: 'birthday',
       label: "Today's Birthday",
-      title: profile.full_name || profile.email || 'Citizen',
+      title: profile.full_name || 'Citizen',
       subtitle: 'The Kingdom Citizens celebrates you.',
       description: 'May you grow in Christ, in grace, in wisdom, and in the purpose of God.',
       avatar_url: profile.avatar_url || null,
@@ -105,7 +104,7 @@ export default async function NoticeBoardPage() {
     })) || []
 
   const announcementSlides =
-    pinnedAnnouncements?.map((item: any) => ({
+    pinnedAnnouncements?.map((item) => ({
       id: `announcement-${item.id}`,
       type: 'announcement',
       label: 'Pinned Announcement',
@@ -119,7 +118,7 @@ export default async function NoticeBoardPage() {
     })) || []
 
   const postSlides =
-    pinnedPosts?.map((item: any) => ({
+    pinnedPosts?.map((item) => ({
       id: `post-${item.id}`,
       type: 'post',
       label: 'Pinned Post',
@@ -133,7 +132,7 @@ export default async function NoticeBoardPage() {
     })) || []
 
   const eventSlides =
-    pinnedEvents?.map((item: any) => ({
+    pinnedEvents?.map((item) => ({
       id: `event-${item.id}`,
       type: 'event',
       label: 'Pinned Event',
@@ -147,7 +146,7 @@ export default async function NoticeBoardPage() {
     })) || []
 
   const projectSlides =
-    pinnedProjects?.map((item: any) => ({
+    pinnedProjects?.map((item) => ({
       id: `project-${item.id}`,
       type: 'project',
       label: 'Pinned Project',
@@ -161,7 +160,7 @@ export default async function NoticeBoardPage() {
     })) || []
 
   const meetingSlides =
-    meetings?.map((item: any) => ({
+    meetings?.map((item) => ({
       id: `meeting-${item.id || `${item.title}-${item.meeting_date}`}`,
       type: 'meeting',
       label: 'Upcoming Meeting',

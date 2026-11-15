@@ -105,7 +105,7 @@ export default async function MessagesPage() {
 
         {error && (
           <div className='mb-6 rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
-            Error loading messages: {error.message}
+            Could not load messages. Please try again.
           </div>
         )}
 

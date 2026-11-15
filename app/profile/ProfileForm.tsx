@@ -15,19 +15,7 @@ type Props = {
   role: string
 }
 
-const getURL = () => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (siteUrl) {
-    return siteUrl.endsWith('/') ? siteUrl : `${siteUrl}/`
-  }
-
-  if (typeof window !== 'undefined') {
-    return `${window.location.origin}/`
-  }
-
-  return 'http://localhost:3000/'
-}
+const getURL = () => `${window.location.origin}/`
 
 const months = [
   { value: '1', label: 'January' },

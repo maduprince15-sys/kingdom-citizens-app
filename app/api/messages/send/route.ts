@@ -47,6 +47,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON message.' }, { status: 400 })
   }
 
+  // No private attachment storage/authorization contract exists yet.
+  // Reject attachment-bearing requests rather than silently claiming delivery.
+  if ('attachments' in bodyData || 'attachment' in bodyData || 'attachmentUrl' in bodyData) {
+    return NextResponse.json({ error: 'Private attachments are not available.' }, { status: 400 })
+  }
+
   const recipientId = bodyData.recipientId
   const subject = typeof bodyData.subject === 'string' ? bodyData.subject.trim() : ''
   const encryptedBody = typeof bodyData.encryptedBody === 'string' ? bodyData.encryptedBody.trim() : ''

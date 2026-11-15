@@ -13,7 +13,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
+  let body
+  try { body = await request.json() } catch {
+    return NextResponse.json({ error: 'Invalid archive request.' }, { status: 400 })
+  }
   const id = body?.id
   const box = body?.box
 
@@ -40,10 +43,10 @@ export async function POST(request: Request) {
     const { error } = await supabase
       .from('app_messages')
       .update({ sender_archived_at: new Date().toISOString() })
-      .eq('id', id)
+      .eq('id', id).eq('sender_id', user.id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ error: 'Could not archive the message.' }, { status: 503 })
     }
 
     return NextResponse.json({ success: true })
@@ -56,10 +59,10 @@ export async function POST(request: Request) {
   const { error } = await supabase
     .from('app_messages')
     .update({ recipient_archived_at: new Date().toISOString() })
-    .eq('id', id)
+    .eq('id', id).eq('recipient_id', user.id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: 'Could not archive the message.' }, { status: 503 })
   }
 
   return NextResponse.json({ success: true })
