@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import { createClient } from '@supabase/supabase-js'
+import { ordinaryPublishableKey, privateReadDenied } from './lib/integration-safety.mjs'
 
 // Opt-in integration runner. Never falls back to application/Production env.
 const ref = process.env.KC_ISOLATED_TEST_PROJECT_REF
 const url = process.env.KC_TEST_SUPABASE_URL
 const key = process.env.KC_TEST_SUPABASE_PUBLISHABLE_KEY
 const accounts = ['A', 'B'].map(name => ({ email: process.env[`KC_TEST_CITIZEN_${name}_EMAIL`], password: process.env[`KC_TEST_CITIZEN_${name}_PASSWORD`] }))
-if (process.env.KC_INTEGRATION_OPT_IN !== 'synthetic-isolated-only' || !ref || ref === 'jngbhejfqbyjletfknkh' || url !== `https://${ref}.supabase.co` || !key || accounts.some(account => !account.email || !account.password) || accounts[0].email === accounts[1].email) {
+if (process.env.KC_INTEGRATION_OPT_IN !== 'synthetic-isolated-only' || !ref || ref === 'jngbhejfqbyjletfknkh' || url !== `https://${ref}.supabase.co` || !ordinaryPublishableKey(key, ref) || accounts.some(account => !account.email || !account.password) || accounts[0].email?.trim().toLowerCase() === accounts[1].email?.trim().toLowerCase()) {
   console.log('BLOCKED: explicit isolated project, publishable key, opt-in and two genuine synthetic accounts required.')
   process.exit(2)
 }
@@ -43,7 +44,7 @@ try {
     assert.equal(own.error, null)
     assert.equal(own.data.role, 'member', 'Integration probes require ordinary synthetic Citizens, not staff')
     const other = await clients[index].from('profiles').select('id, email, phone').eq('id', otherId)
-    assert.ok(other.error || !other.data?.length, 'Other Citizen private profile is exposed')
+    assert.ok(privateReadDenied(other), 'Other Citizen private profile is exposed')
     const directory = await clients[index].rpc('member_directory')
     assert.equal(directory.error, null, 'Member directory unavailable')
     assert.ok(!directory.data?.some(row => row.id !== users[index].id && (row.email || row.phone)), 'Directory discloses other Citizen contact details')

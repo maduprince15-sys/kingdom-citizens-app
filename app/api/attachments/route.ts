@@ -32,7 +32,7 @@ async function authorize(request: Request) {
   return { client, user, prefix: `${scope}/${id}` }
 }
 
-export async function POST(request: Request) {
+async function uploadAttachment(request: Request) {
   const access = await authorize(request)
   if (access.response) return access.response
   const mime = request.headers.get('content-type')?.split(';')[0] || ''
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   } finally { reader.releaseLock() }
 }
 
-export async function GET(request: Request) {
+async function getAttachments(request: Request) {
   const access = await authorize(request)
   if (access.response) return access.response
   const name = new URL(request.url).searchParams.get('name')
@@ -84,6 +84,7 @@ export async function GET(request: Request) {
   if (!name) {
     const { data, error } = await bucket.list(access.prefix, { limit: 100 })
     if (error) return NextResponse.json({ error: 'Could not load attachments.' }, { status: 503 })
+    if (!await freshResourceAccess(access)) return resourceUnavailable()
     return NextResponse.json({ files: data?.map(file => ({ name: file.name })) || [] }, { headers: { 'Cache-Control': 'private, no-store' } })
   }
   const match = name.match(/^([0-9a-f-]{36})_([0-9a-f-]{36})\.(png|jpg|pdf|txt)$/i)
@@ -92,6 +93,7 @@ export async function GET(request: Request) {
   const { data, error } = await bucket.download(`${access.prefix}/${name}`)
   if (error || !data) return NextResponse.json({ error: 'Attachment not found.' }, { status: 404 })
   if (data.size > MAX_ATTACHMENT_BYTES) return NextResponse.json({ error: 'Attachment exceeds the size limit.' }, { status: 413 })
+  if (!await freshResourceAccess(access)) return resourceUnavailable()
   return new Response(data, { headers: {
     'Content-Type': attachmentType(match[3].toLowerCase())!,
     'Content-Disposition': `attachment; filename="${name}"`,
@@ -101,15 +103,32 @@ export async function GET(request: Request) {
   } })
 }
 
-export async function DELETE(request: Request) {
+async function deleteAttachment(request: Request) {
   const access = await authorize(request)
   if (access.response) return access.response
   const name = new URL(request.url).searchParams.get('name') || ''
   const match = name.match(/^([0-9a-f-]{36})_([0-9a-f-]{36})\.(png|jpg|pdf|txt)$/i)
   if (!match || !resourceIdPattern.test(match[1]) || !resourceIdPattern.test(match[2])) return NextResponse.json({ error: 'Invalid attachment.' }, { status: 400 })
   if (match[1] !== access.user!.id) return NextResponse.json({ error: 'Only the uploader can delete this attachment.' }, { status: 403 })
+  if (!await freshResourceAccess(access)) return resourceUnavailable()
   const { data, error } = await access.client!.storage.from(PRIVATE_ATTACHMENT_BUCKET).remove([`${access.prefix}/${name}`])
   if (error) return NextResponse.json({ error: 'Could not delete the attachment.' }, { status: 503 })
   if (!data?.length) return NextResponse.json({ error: 'Attachment not found.' }, { status: 404 })
   return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
+
+function resourceUnavailable() {
+  return NextResponse.json({ error: 'Conversation not found.' }, { status: 404, headers: { 'Cache-Control': 'private, no-store' } })
+}
+async function freshResourceAccess(access: Awaited<ReturnType<typeof authorize>>) {
+  if (!access.client || !access.user || !access.prefix) return false
+  const [scope, id] = access.prefix.split('/')
+  return canAccessResource(access.client, access.user.id, scope as AttachmentScope, id)
+}
+async function safelyHandle(handler: (request: Request) => Promise<Response>, request: Request) {
+  try { return await handler(request) }
+  catch { return NextResponse.json({ error: 'Attachment service temporarily unavailable.' }, { status: 503, headers: { 'Cache-Control': 'private, no-store' } }) }
+}
+export function POST(request: Request) { return safelyHandle(uploadAttachment, request) }
+export function GET(request: Request) { return safelyHandle(getAttachments, request) }
+export function DELETE(request: Request) { return safelyHandle(deleteAttachment, request) }

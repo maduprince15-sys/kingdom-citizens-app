@@ -1,5 +1,5 @@
 import { beforeAll, expect, it } from 'vitest'
-import { decryptForRecipient, encryptForRecipients, generateRecipientIdentity, publicKeyFingerprint, type MessageContext, type RecipientEnvelope } from '../lib/e2ee/recipient-envelope'
+import { decryptForRecipient, encryptForRecipients, generateRecipientIdentity, publicKeyFingerprint, parseRecipientEnvelope, type MessageContext, type RecipientEnvelope } from '../lib/e2ee/recipient-envelope'
 const A = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', B = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb', C = 'cccccccc-cccc-4ccc-cccc-cccccccccccc'
 const context: MessageContext = { conversationId: 'dddddddd-dddd-4ddd-dddd-dddddddddddd', senderId: A, recipientIds: [A, B] }
 let a: CryptoKeyPair, b: CryptoKeyPair, outsider: CryptoKeyPair, envelope: RecipientEnvelope
@@ -50,4 +50,30 @@ it('refuses to encrypt without both authenticated recipient keys', async () => {
 })
 it('refuses duplicate recipient identities', async () => {
   await expect(encryptForRecipients('Synthetic', context, [{ citizenId: A, publicKey: a.publicKey }, { citizenId: A, publicKey: b.publicKey }])).rejects.toThrow()
+})
+
+it('parses serialized storage data into a canonical envelope', async () => {
+  const reordered = { ...envelope, context: { recipientIds: [...context.recipientIds].reverse(), senderId: A, conversationId: context.conversationId }, recipients: [...envelope.recipients].reverse() }
+  expect(parseRecipientEnvelope(JSON.stringify(reordered))).not.toBeNull()
+  expect(await decryptForRecipient(JSON.stringify(reordered), context, B, await publicKeyFingerprint(b.publicKey), b.privateKey)).toBe('Synthetic private message')
+})
+it.each([null, undefined, [], {}, 'not-json', 'x'.repeat(28 * 1024 + 1)])('rejects malformed or oversized untrusted input before crypto', value => {
+  expect(parseRecipientEnvelope(value)).toBeNull()
+})
+it('rejects oversized ciphertext and incorrect IV length', () => {
+  expect(parseRecipientEnvelope({ ...envelope, ciphertext: 'A'.repeat(24_000) })).toBeNull()
+  expect(parseRecipientEnvelope({ ...envelope, iv: 'AAAA' })).toBeNull()
+})
+it('rejects non-canonical base64 and unexpected secret fields', () => {
+  expect(parseRecipientEnvelope({ ...envelope, ciphertext: envelope.ciphertext + '\n' })).toBeNull()
+  expect(parseRecipientEnvelope({ ...envelope, privateKey: 'must-never-be-accepted' })).toBeNull()
+})
+it('rejects one key reused for two distinct Citizens', async () => {
+  await expect(encryptForRecipients('Synthetic', context, [{ citizenId: A, publicKey: a.publicKey }, { citizenId: B, publicKey: a.publicKey }])).rejects.toThrow('Distinct')
+})
+it('rejects case-alias identities', async () => {
+  await expect(encryptForRecipients('Synthetic', { ...context, senderId: A.toUpperCase() }, [{ citizenId: A, publicKey: a.publicKey }, { citizenId: B, publicKey: b.publicKey }])).rejects.toThrow()
+})
+it('rejects recipient key metadata aliasing', () => {
+  expect(parseRecipientEnvelope({ ...envelope, recipients: envelope.recipients.map(key => ({ ...key, keyId: envelope.recipients[0].keyId })) })).toBeNull()
 })

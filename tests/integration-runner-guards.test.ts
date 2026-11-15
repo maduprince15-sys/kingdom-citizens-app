@@ -2,7 +2,7 @@ import { expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
 const fixture = {
   KC_INTEGRATION_OPT_IN: 'synthetic-isolated-only', KC_ISOLATED_TEST_PROJECT_REF: 'synthetic-test',
-  KC_TEST_SUPABASE_URL: 'https://synthetic-test.supabase.co', KC_TEST_SUPABASE_PUBLISHABLE_KEY: 'synthetic-key',
+  KC_TEST_SUPABASE_URL: 'https://synthetic-test.supabase.co', KC_TEST_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_synthetic_fixture',
   KC_TEST_CITIZEN_A_EMAIL: 'synthetic-a@example.invalid', KC_TEST_CITIZEN_A_PASSWORD: 'synthetic-password',
   KC_TEST_CITIZEN_B_EMAIL: 'synthetic-b@example.invalid', KC_TEST_CITIZEN_B_PASSWORD: 'synthetic-password',
 }
