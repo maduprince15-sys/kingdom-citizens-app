@@ -2,13 +2,11 @@
 
 import {
   decryptMessageText,
-  encryptMessageText,
   isEncryptedMessagePayload,
   type EncryptedMessagePayload,
 } from '@/lib/e2ee/crypto'
 import {
   getDeviceMessageKey,
-  getOrCreateDeviceMessageKey,
 } from '@/lib/e2ee/device-keys'
 
 export type StoredEncryptedMessage = {
@@ -16,20 +14,11 @@ export type StoredEncryptedMessage = {
   payload: EncryptedMessagePayload
 }
 
-export async function encryptPrivateMessageBody(plaintext: string) {
-  const deviceKey = await getOrCreateDeviceMessageKey()
-  const payload = await encryptMessageText({
-    plaintext,
-    key: deviceKey.key,
-    keyId: deviceKey.keyId,
-    senderDeviceId: deviceKey.deviceId,
-    recipientDeviceId: 'not-wrapped-yet',
-  })
-
-  return JSON.stringify({
-    encrypted: true,
-    payload,
-  } satisfies StoredEncryptedMessage)
+export async function encryptPrivateMessageBody(plaintext: string): Promise<string> {
+  // Legacy sender-only keys cannot safely make a message readable by another
+  // Citizen. Do not create more raw localStorage keys or pretend delivery works.
+  if (!plaintext.trim()) throw new Error('Message is required.')
+  throw new Error('Secure recipient enrollment is not available. Your draft has not been sent.')
 }
 
 export function parseStoredEncryptedMessage(value: string): StoredEncryptedMessage | null {

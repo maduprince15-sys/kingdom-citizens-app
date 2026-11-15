@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const extension = validateAttachment(bytes, mime)
     if (!extension) return NextResponse.json({ error: 'Invalid or unsupported file.' }, { status: 415 })
     // Original filenames and client paths are never trusted or persisted.
-    const name = `${crypto.randomUUID()}.${extension}`
+    const name = `${access.user!.id}_${crypto.randomUUID()}.${extension}`
     // Recheck membership after reading the request, immediately before storage access.
     const [scope, id] = access.prefix!.split('/')
     if (!await canAccessResource(access.client!, access.user!.id, scope as AttachmentScope, id)) {
@@ -86,17 +86,30 @@ export async function GET(request: Request) {
     if (error) return NextResponse.json({ error: 'Could not load attachments.' }, { status: 503 })
     return NextResponse.json({ files: data?.map(file => ({ name: file.name })) || [] }, { headers: { 'Cache-Control': 'private, no-store' } })
   }
-  const match = name.match(/^([0-9a-f-]{36})\.(png|jpg|pdf|txt)$/i)
-  if (!match || !resourceIdPattern.test(match[1])) return NextResponse.json({ error: 'Invalid attachment.' }, { status: 400 })
+  const match = name.match(/^([0-9a-f-]{36})_([0-9a-f-]{36})\.(png|jpg|pdf|txt)$/i)
+  if (!match || !resourceIdPattern.test(match[1]) || !resourceIdPattern.test(match[2])) return NextResponse.json({ error: 'Invalid attachment.' }, { status: 400 })
   // Proxy bytes after fresh authorization, rather than issuing reusable public/signed URLs.
   const { data, error } = await bucket.download(`${access.prefix}/${name}`)
   if (error || !data) return NextResponse.json({ error: 'Attachment not found.' }, { status: 404 })
   if (data.size > MAX_ATTACHMENT_BYTES) return NextResponse.json({ error: 'Attachment exceeds the size limit.' }, { status: 413 })
   return new Response(data, { headers: {
-    'Content-Type': attachmentType(match[2].toLowerCase())!,
+    'Content-Type': attachmentType(match[3].toLowerCase())!,
     'Content-Disposition': `attachment; filename="${name}"`,
     'X-Content-Type-Options': 'nosniff',
     'Content-Security-Policy': "default-src 'none'; sandbox",
     'Cache-Control': 'private, no-store',
   } })
+}
+
+export async function DELETE(request: Request) {
+  const access = await authorize(request)
+  if (access.response) return access.response
+  const name = new URL(request.url).searchParams.get('name') || ''
+  const match = name.match(/^([0-9a-f-]{36})_([0-9a-f-]{36})\.(png|jpg|pdf|txt)$/i)
+  if (!match || !resourceIdPattern.test(match[1]) || !resourceIdPattern.test(match[2])) return NextResponse.json({ error: 'Invalid attachment.' }, { status: 400 })
+  if (match[1] !== access.user!.id) return NextResponse.json({ error: 'Only the uploader can delete this attachment.' }, { status: 403 })
+  const { data, error } = await access.client!.storage.from(PRIVATE_ATTACHMENT_BUCKET).remove([`${access.prefix}/${name}`])
+  if (error) return NextResponse.json({ error: 'Could not delete the attachment.' }, { status: 503 })
+  if (!data?.length) return NextResponse.json({ error: 'Attachment not found.' }, { status: 404 })
+  return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'private, no-store' } })
 }

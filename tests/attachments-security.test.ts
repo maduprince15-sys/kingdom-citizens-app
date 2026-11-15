@@ -1,13 +1,13 @@
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
-const m = vi.hoisted(() => ({ getUser: vi.fn(), from: vi.fn(), upload: vi.fn(), download: vi.fn(), list: vi.fn(), storage: vi.fn(), getBucket: vi.fn() }))
+const m = vi.hoisted(() => ({ getUser: vi.fn(), from: vi.fn(), upload: vi.fn(), download: vi.fn(), list: vi.fn(), storage: vi.fn(), getBucket: vi.fn(), remove: vi.fn() }))
 vi.mock('../lib/supabase/server', () => ({ createClient: async () => ({ auth: m, from: m.from, storage: { from: m.storage } }) }))
 vi.mock('../lib/supabase/admin', () => ({ createAdminClient: () => ({ storage: { getBucket: m.getBucket } }) }))
-import { GET, POST } from '../app/api/attachments/route'
+import { GET, POST, DELETE } from '../app/api/attachments/route'
 import { validateAttachment, MAX_ATTACHMENT_BYTES } from '../lib/messaging/attachments'
 import { isolatedAttachmentsEnabled } from '../lib/messaging/access'
 const A = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', B = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb'
 const id = 'cccccccc-cccc-4ccc-cccc-cccccccccccc'
-const filename = 'dddddddd-dddd-4ddd-dddd-dddddddddddd.txt'
+const filename = `${A}_dddddddd-dddd-4ddd-dddd-dddddddddddd.txt`
 function query(data: unknown, error: unknown = null) {
   const q = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data, error }) }
   q.select.mockReturnValue(q); q.eq.mockReturnValue(q); return q
@@ -24,8 +24,9 @@ beforeEach(() => {
   m.getUser.mockResolvedValue({ data: { user: { id: A } }, error: null })
   m.from.mockImplementation(() => query({ sender_id: A, recipient_id: B }))
   m.getBucket.mockResolvedValue({ data: { public: false, file_size_limit: MAX_ATTACHMENT_BYTES, allowed_mime_types: ['text/plain', 'image/png', 'image/jpeg', 'application/pdf'] }, error: null })
-  m.storage.mockReturnValue({ upload: m.upload, download: m.download, list: m.list })
+  m.storage.mockReturnValue({ upload: m.upload, download: m.download, list: m.list, remove: m.remove })
   m.upload.mockResolvedValue({ error: null })
+  m.remove.mockResolvedValue({ data: [{ name: filename }], error: null })
   m.download.mockResolvedValue({ data: new Blob(['private synthetic data']), error: null })
   m.list.mockResolvedValue({ data: [{ name: filename }], error: null })
 })
@@ -69,7 +70,7 @@ it('rejects unbounded bucket configuration', async () => {
 it('uploads bounded synthetic text to the private resource prefix', async () => {
   expect((await POST(request())).status).toBe(201)
   expect(m.storage).toHaveBeenCalledWith('citizen-private-attachments')
-  expect(m.upload).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^messages/${id}/[0-9a-f-]+\\.txt$`)), expect.any(Uint8Array), { contentType: 'text/plain', upsert: false })
+  expect(m.upload).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^messages/${id}/${A}_[0-9a-f-]+\\.txt$`)), expect.any(Uint8Array), { contentType: 'text/plain', upsert: false })
 })
 it('rechecks access before persistence', async () => {
   m.from.mockReturnValueOnce(query({ sender_id: A, recipient_id: B })).mockReturnValueOnce(query(null))
@@ -127,4 +128,19 @@ it.each([['image/png', new Uint8Array([137,80,78,71,13,10,26,10]), 'png'], ['ima
 it('rejects invalid UTF-8 and NUL text', () => {
   expect(validateAttachment(new Uint8Array([255]), 'text/plain')).toBeNull()
   expect(validateAttachment(new Uint8Array([65, 0]), 'text/plain')).toBeNull()
+})
+
+it('allows uploader deletion while resource access is current', async () => {
+  expect((await DELETE(new Request(`https://preview.invalid/api/attachments?scope=messages&id=${id}&name=${filename}`))).status).toBe(200)
+  expect(m.remove).toHaveBeenCalledWith([`messages/${id}/${filename}`])
+})
+it('rejects deletion by a non-uploading participant', async () => {
+  m.getUser.mockResolvedValue({ data: { user: { id: B } }, error: null })
+  expect((await DELETE(new Request(`https://preview.invalid/api/attachments?scope=messages&id=${id}&name=${filename}`))).status).toBe(403)
+  expect(m.remove).not.toHaveBeenCalled()
+})
+it('revoked resource access rejects deletion before storage', async () => {
+  m.from.mockReturnValue(query(null))
+  expect((await DELETE(new Request(`https://preview.invalid/api/attachments?scope=messages&id=${id}&name=${filename}`))).status).toBe(404)
+  expect(m.remove).not.toHaveBeenCalled()
 })

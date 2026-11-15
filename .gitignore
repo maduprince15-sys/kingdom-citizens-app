@@ -48,3 +48,6 @@ next-env.d.ts
 
 # local verification logs and scratch files
 /work/
+
+# Supabase CLI local metadata (no connection credentials committed)
+/supabase/.temp/
