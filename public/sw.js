@@ -1,6 +1,6 @@
 const CACHE_NAME = 'kingdom-citizens-v1'
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
@@ -20,6 +20,16 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
+    return
+  }
+
+  const url = new URL(event.request.url)
+  // Never replay a cached authenticated response when the network is unavailable.
+  if (event.request.cache === 'no-store' || event.request.mode === 'navigate' ||
+      event.request.headers.has('Authorization') || event.request.headers.has('RSC') ||
+      url.pathname === '/api' || url.pathname.startsWith('/api/') ||
+      url.pathname === '/auth' || url.pathname.startsWith('/auth/')) {
+    event.respondWith(fetch(event.request))
     return
   }
 
