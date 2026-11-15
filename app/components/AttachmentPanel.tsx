@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 
-export default function AttachmentPanel({ scope, resourceId }: { scope: 'messages' | 'groups'; resourceId: string }) {
+export default function AttachmentPanel({ scope, resourceId, currentUserId }: { scope: 'messages' | 'groups'; resourceId: string; currentUserId: string }) {
   const url = `/api/attachments?scope=${scope}&id=${encodeURIComponent(resourceId)}`
   const [files, setFiles] = useState<{ name: string }[]>([])
   const [status, setStatus] = useState('Loading attachments...')
@@ -35,6 +35,16 @@ export default function AttachmentPanel({ scope, resourceId }: { scope: 'message
     } catch { setStatus('Upload failed. Please try again.') }
     finally { setUploading(false) }
   }
+  async function remove(name: string) {
+    setUploading(true)
+    try {
+      const response = await fetch(`${url}&name=${encodeURIComponent(name)}`, { method: 'DELETE' })
+      if (!response.ok) { setStatus('Could not delete this attachment. Access may have changed.'); return }
+      await load()
+      setStatus('Attachment deleted.')
+    } catch { setStatus('Attachment deletion failed. Please try again.') }
+    finally { setUploading(false) }
+  }
   return <section className="mt-6 rounded-xl border border-yellow-900/40 p-4">
     <h2 className="font-semibold">Private attachments</h2>
     <label className="mt-3 block text-sm">PNG, JPEG, PDF or plain text; up to 2 MB.
@@ -42,6 +52,6 @@ export default function AttachmentPanel({ scope, resourceId }: { scope: 'message
         onChange={event => { const file = event.target.files?.[0]; if (file) void upload(file); event.target.value = '' }} />
     </label>
     <p role="status" className="mt-2 text-sm">{status}</p>
-    <ul>{files.map(file => <li key={file.name}><a className="text-yellow-300 underline" href={`${url}&name=${encodeURIComponent(file.name)}`}>Download {file.name}</a></li>)}</ul>
+    <ul>{files.map(file => <li key={file.name}><a className="text-yellow-300 underline" href={`${url}&name=${encodeURIComponent(file.name)}`}>Download {file.name}</a>{file.name.startsWith(`${currentUserId}_`) && <button className="ml-3 underline" disabled={uploading} onClick={() => void remove(file.name)}>Delete your attachment</button>}</li>)}</ul>
   </section>
 }

@@ -99,7 +99,7 @@ export default async function MessageDetailPage({ params }: Props) {
           </div>
         </article>
 
-        {isolatedAttachmentsEnabled() && <AttachmentPanel scope='messages' resourceId={message.id} />}
+        {isolatedAttachmentsEnabled() && <AttachmentPanel scope='messages' resourceId={message.id} currentUserId={user.id} />}
 
         <div className='mt-6 flex flex-wrap gap-3'>
           <Link href='/messages' className='rounded-full border border-yellow-700/70 px-4 py-2 text-sm text-yellow-300 hover:bg-yellow-700/20'>

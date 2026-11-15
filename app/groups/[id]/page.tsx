@@ -20,6 +20,6 @@ export default async function CitizenGroupChat({ params }: { params: Promise<{ i
     {messagesError ? <p>Group discussion is unavailable.</p> : <ChatRoom messages={messages || []} currentUserId={user.id}
       currentUserName={profile?.full_name || 'Citizen'} currentUserRole={profile?.role || 'member'}
       canModerate={['admin', 'moderator'].includes(profile?.role || '')} chatRoom={`group:${id}`} title={group?.name || 'Citizen group'} />}
-    {isolatedAttachmentsEnabled() && <AttachmentPanel scope="groups" resourceId={id} />}
+    {isolatedAttachmentsEnabled() && <AttachmentPanel scope="groups" resourceId={id} currentUserId={user.id} />}
   </main>
 }
