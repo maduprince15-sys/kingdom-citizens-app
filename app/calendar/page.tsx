@@ -2,6 +2,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 
+type CalendarEvent = {
+  event_date: string
+  title?: string | null
+  description?: string | null
+  meeting_url?: string | null
+  location?: string | null
+}
+
 function addOneDay(date: string) {
   const next = new Date(`${date}T00:00:00`)
   next.setDate(next.getDate() + 1)
@@ -12,7 +20,7 @@ function compactDate(date: string) {
   return date.replace(/-/g, '')
 }
 
-function buildGoogleCalendarUrl(event: any) {
+function buildGoogleCalendarUrl(event: CalendarEvent) {
   const start = compactDate(event.event_date)
   const end = compactDate(addOneDay(event.event_date))
 
@@ -34,7 +42,7 @@ function buildGoogleCalendarUrl(event: any) {
   return `https://calendar.google.com/calendar/render?${params.toString()}`
 }
 
-function buildOutlookCalendarUrl(event: any) {
+function buildOutlookCalendarUrl(event: CalendarEvent) {
   const params = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
@@ -54,7 +62,7 @@ function buildOutlookCalendarUrl(event: any) {
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`
 }
 
-function buildYahooCalendarUrl(event: any) {
+function buildYahooCalendarUrl(event: CalendarEvent) {
   const start = compactDate(event.event_date)
   const end = compactDate(addOneDay(event.event_date))
 

@@ -4,7 +4,7 @@ import { createClient } from '../../../lib/supabase/server'
 import PublicHeader from '../../components/PublicHeader'
 import PublicFooter from '../../components/PublicFooter'
 import StudyProgressControls from './StudyProgressControls'
-import ChatRoom from '../../chat/ChatRoom'
+import ChatRoom, { type ChatMessage } from '../../chat/ChatRoom'
 
 type Props = {
   params: Promise<{
@@ -34,7 +34,7 @@ export default async function StudyResourcePage({ params }: Props) {
 
   let progress = null
   let profile = null
-  let discussionMessages: any[] = []
+  let discussionMessages: ChatMessage[] = []
 
   if (user) {
     const { data: progressData } = await supabase

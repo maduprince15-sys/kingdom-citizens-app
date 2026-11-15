@@ -47,7 +47,7 @@ export default function RoleSelect({
         }),
       })
 
-      let result: any = {}
+      let result: { error?: string } = {}
 
       try {
         result = await response.json()

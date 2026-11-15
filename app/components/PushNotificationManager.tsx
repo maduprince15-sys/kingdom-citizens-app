@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { isNativeMobileApp } from '../../lib/mobile-runtime'
 
 type PushStatus =
@@ -21,39 +21,6 @@ export default function PushNotificationManager() {
   const [status, setStatus] = useState<PushStatus>('checking')
   const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    const native = isNativeMobileApp()
-    setNativeApp(native)
-
-    if (!native) {
-      setStatus('web')
-      return
-    }
-
-    async function checkPermission() {
-      const { PushNotifications } = await import('@capacitor/push-notifications')
-      const permission = await PushNotifications.checkPermissions()
-
-      if (permission.receive === 'granted') {
-        setStatus('enabled')
-        setMessage('Notifications enabled')
-        await setupPushRegistration()
-      } else if (
-        permission.receive === 'denied' ||
-        window.localStorage.getItem(DENIED_STORAGE_KEY) === 'true'
-      ) {
-        setStatus('blocked')
-        setMessage('Notifications blocked in Android settings')
-      } else {
-        setStatus('ready')
-      }
-    }
-
-    checkPermission().catch(() => {
-      setStatus('failed')
-      setMessage('Could not check notification permission.')
-    })
-  }, [])
 
   async function createNotificationChannels() {
     const { PushNotifications } = await import('@capacitor/push-notifications')
@@ -166,6 +133,39 @@ export default function PushNotificationManager() {
       setMessage('Could not enable notifications.')
     }
   }
+
+  const checkInitialPermission = useEffectEvent(() => {
+    async function checkPermission() {
+      // Resolve native status after mounting without synchronous effect updates.
+      await Promise.resolve()
+      const native = isNativeMobileApp()
+      setNativeApp(native)
+      if (!native) { setStatus('web'); return }
+      const { PushNotifications } = await import('@capacitor/push-notifications')
+      const permission = await PushNotifications.checkPermissions()
+
+      if (permission.receive === 'granted') {
+        setStatus('enabled')
+        setMessage('Notifications enabled')
+        await setupPushRegistration()
+      } else if (
+        permission.receive === 'denied' ||
+        window.localStorage.getItem(DENIED_STORAGE_KEY) === 'true'
+      ) {
+        setStatus('blocked')
+        setMessage('Notifications blocked in Android settings')
+      } else {
+        setStatus('ready')
+      }
+    }
+
+    checkPermission().catch(() => {
+      setStatus('failed')
+      setMessage('Could not check notification permission.')
+    })
+  })
+
+  useEffect(() => { checkInitialPermission() }, [])
 
   if (!nativeApp || status === 'web' || status === 'checking') return null
 
