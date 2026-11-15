@@ -1,5 +1,3 @@
-'use client'
-
 export type EncryptedMessagePayload = {
   version: 1
   algorithm: 'AES-GCM'
