@@ -48,44 +48,49 @@ export default function MessageForm({
       return
     }
 
-    const encryptedBody = await encryptPrivateMessageBody(cleanBody)
+    try {
+      const encryptedBody = await encryptPrivateMessageBody(cleanBody)
 
-    const response = await fetch('/api/messages/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        recipientId,
-        subject,
-        encryptedBody,
-        parentMessageId: parentMessageId || null,
-      }),
-    })
+      const response = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId,
+          subject,
+          encryptedBody,
+          parentMessageId: parentMessageId || null,
+        }),
+      })
 
-    const result = await response.json()
+      const result = await response.json()
 
-    if (!response.ok) {
-      setMessage(result.error || 'Message failed.')
+      if (!response.ok) {
+        setMessage(result.error || 'Message failed.')
+        return
+      }
+
+      setMessage(
+        recipientId === 'all'
+          ? 'Broadcast sent successfully.'
+          : 'Message sent successfully.'
+      )
+      setBody('')
+
+
+      setTimeout(() => {
+        router.push('/messages')
+        router.refresh()
+      }, 1000)
+    } catch {
+      setMessage('Could not send the message. Your draft is still here; please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    setMessage(
-      recipientId === 'all'
-        ? 'Broadcast sent successfully.'
-        : 'Message sent successfully.'
-    )
-    setBody('')
-
-    setLoading(false)
-
-    setTimeout(() => {
-      router.push('/messages')
-      router.refresh()
-    }, 1000)
   }
 
   return (
     <form onSubmit={handleSubmit} className='space-y-5'>
+      <p role="status" className="text-sm text-yellow-200">Recipients may not be able to open messages from another device yet.</p>
       <div>
         <label className='mb-2 block text-sm text-gray-300'>Recipient</label>
 
@@ -160,7 +165,7 @@ export default function MessageForm({
             : 'Send Message'}
       </button>
 
-      {message && <p className='text-sm text-yellow-300'>{message}</p>}
+      {message && <p role='status' className='text-sm text-yellow-300'>{message}</p>}
     </form>
   )
 }
