@@ -94,7 +94,7 @@ jobs:
           cp "$apk" Kingdom-Citizens-Beta-debug.apk
           sha256sum Kingdom-Citizens-Beta-debug.apk > android-beta-sha256.txt
           git rev-parse HEAD > android-beta-source.txt
-          printf '%s\n' 'Web source: 456e416885250e081a4ed0b9c06056e8541c5a34' >> android-beta-source.txt
+          printf '%s\n' 'Web source: c942d3c078491b154530e2d6e74b534035353985' >> android-beta-source.txt
           cp docs/ANDROID_BETA_TEST_README.md Android-Beta-Acceptance.md
 
       - name: Upload APK for later owner-led Android testing

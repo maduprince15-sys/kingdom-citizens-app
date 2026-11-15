@@ -15,7 +15,7 @@ The Android debug beta is a separate installable application. It does **not** ov
 
 ## Consolidated candidate — 15 November 2026
 
-Web source is pinned to development commit `456e416885250e081a4ed0b9c06056e8541c5a34`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
+Web source is pinned to development commit `c942d3c078491b154530e2d6e74b534035353985`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
 
 Later ordered acceptance (not a request to test now):
 
@@ -33,3 +33,9 @@ Outstanding external gates: isolated test account/provider configuration, Previe
 This candidate includes 70 mocked behavioral regressions and the profile/directory/chat/role hardening documented in `docs/TWO_CITIZEN_VERIFICATION_2026-11-15.md`. Full lint has zero errors. Actual isolated A/B authentication, deployed RLS, ordinary Citizen-to-Citizen delivery, recipient decryption and private attachments remain BLOCKED; an APK build does not change those findings.
 
 Artifact retrieval from this execution environment is blocked by a proxy CONNECT 403 on GitHub's Azure artifact host. Checksum verification requires actual downloaded bytes; no local checksum or installation is claimed. This candidate supersedes the earlier beta installer for later acceptance. No manual testing requested now.
+
+## Messaging/attachment code candidate
+
+This candidate incorporates 111 mocked behavioral tests, current-membership group chat/membership/deletion APIs, draft-preserving delivery errors, and the private attachment pipeline. Attachments remain disabled until explicitly configured against an isolated test project with a verified private size/type-limited bucket and participant-only RLS; no Production storage is used. Recipient decryption remains BLOCKED by missing key distribution, and ordinary Citizen-to-Citizen messaging is not claimed complete.
+
+The opt-in `npm run test:two-citizen` runner exits BLOCKED without synthetic isolated account settings. See `docs/SECURE_MESSAGING_ATTACHMENTS_2026-11-15.md` for exact prerequisites and pending acceptance gates. No installation or manual device testing requested now.
