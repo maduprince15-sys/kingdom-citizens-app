@@ -17,9 +17,13 @@ export default function DevicePairingPanel({ citizenId }: { citizenId: string })
   const epoch=useRef(0)
   const access=useRef<ReturnType<typeof createSessionKeyAccess>|null>(null)
   const citizen = useCallback(async () => {
-    const {data:{user},error}=await createClient().auth.getUser()
-    return !error && user && !user.is_anonymous && user.email_confirmed_at ? user.id : null
-  }, [])
+    const {data:{user},error}=await createClient().auth.getUser().catch(()=>({data:{user:null},error:new Error('Session unavailable')}))
+    const id=!error && user && !user.is_anonymous && user.email_confirmed_at ? user.id : null
+    if(id!==citizenId){
+      epoch.current++;access.current?.invalidate();setRegistry(null);setPending(null);setApproval('');setReceived('');setIncoming('');setFingerprint('');setConfirmed(false)
+    }
+    return id
+  }, [citizenId])
   const request = useCallback(async function request<T=Registry>(input?:Record<string,unknown>):Promise<T> {
     const generation=epoch.current
     if(await citizen()!==citizenId || generation!==epoch.current)throw new Error('Reauthenticate to manage devices.')
