@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  generateAesGcmKey,
   importAesGcmKey,
 } from '@/lib/e2ee/crypto'
 
@@ -9,45 +8,13 @@ const DEVICE_ID_KEY = 'kingdom-citizens:e2ee-device-id'
 const DEVICE_KEY_ID_KEY = 'kingdom-citizens:e2ee-device-key-id'
 const DEVICE_AES_KEY = 'kingdom-citizens:e2ee-device-aes-key'
 
-export async function getOrCreateDeviceMessageKey() {
-  if (typeof window === 'undefined') {
-    throw new Error('E2EE device keys are only available in the browser.')
-  }
-
-  let deviceId = window.localStorage.getItem(DEVICE_ID_KEY)
-  if (!deviceId) {
-    deviceId = crypto.randomUUID()
-    window.localStorage.setItem(DEVICE_ID_KEY, deviceId)
-  }
-
-  let keyId = window.localStorage.getItem(DEVICE_KEY_ID_KEY)
-  if (!keyId) {
-    keyId = crypto.randomUUID()
-    window.localStorage.setItem(DEVICE_KEY_ID_KEY, keyId)
-  }
-
-  let rawKey = window.localStorage.getItem(DEVICE_AES_KEY)
-  if (!rawKey) {
-    const generated = await generateAesGcmKey()
-    rawKey = generated.rawKey
-    window.localStorage.setItem(DEVICE_AES_KEY, rawKey)
-
-    return {
-      deviceId,
-      keyId,
-      key: generated.key,
-    }
-  }
-
-  return {
-    deviceId,
-    keyId,
-    key: await importAesGcmKey(rawKey),
-  }
-}
-
+// Read existing legacy keys only. Ownership of old shared-device storage cannot
+// be proven, so no automatic per-Citizen migration or new raw keys are created.
 export async function getDeviceMessageKey(keyId?: string) {
-  const deviceKey = await getOrCreateDeviceMessageKey()
-  if (keyId && deviceKey.keyId !== keyId) return null
-  return deviceKey
+  if (typeof window === 'undefined') return null
+  const deviceId = window.localStorage.getItem(DEVICE_ID_KEY)
+  const storedKeyId = window.localStorage.getItem(DEVICE_KEY_ID_KEY)
+  const rawKey = window.localStorage.getItem(DEVICE_AES_KEY)
+  if (!deviceId || !storedKeyId || !rawKey || (keyId && storedKeyId !== keyId)) return null
+  return { deviceId, keyId: storedKeyId, key: await importAesGcmKey(rawKey) }
 }

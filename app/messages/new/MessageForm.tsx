@@ -90,7 +90,7 @@ export default function MessageForm({
 
   return (
     <form onSubmit={handleSubmit} className='space-y-5'>
-      <p role="status" className="text-sm text-yellow-200">Recipients may not be able to open messages from another device yet.</p>
+      <p role="status" className="text-sm text-yellow-200">Secure private-message sending is awaiting recipient setup. Your draft is preserved if sending fails.</p>
       <div>
         <label className='mb-2 block text-sm text-gray-300'>Recipient</label>
 
