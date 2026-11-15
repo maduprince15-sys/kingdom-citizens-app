@@ -5,17 +5,14 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { resourceIdPattern } from '../../../../lib/messaging/access'
 import { createEnrollmentChallenge, importEnrollmentPublicKey, proofDigest } from '../../../../lib/e2ee/enrollment'
 
+import { isolatedRecipientEnrollmentEnabled } from '../../../../lib/e2ee/isolated-config'
+
 const reply = (body: Record<string, unknown>, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } })
-function enabled() {
-  const ref = process.env.KC_ISOLATED_TEST_PROJECT_REF
-  return process.env.KC_RECIPIENT_ENROLLMENT_ENABLED === 'isolated-test-only' && process.env.VERCEL_ENV !== 'production' &&
-    Boolean(ref && ref !== 'jngbhejfqbyjletfknkh' && process.env.NEXT_PUBLIC_SUPABASE_URL === `https://${ref}.supabase.co`)
-}
 async function authenticate() {
   const client = await createClient()
   const { data: { user }, error } = await client.auth.getUser()
   if (error || !user) return { response: reply({ error: 'Unauthorized' }, 401) }
-  if (!enabled()) return { response: reply({ error: 'Recipient enrollment requires isolated configuration.' }, 503) }
+  if (!isolatedRecipientEnrollmentEnabled()) return { response: reply({ error: 'Recipient enrollment requires isolated configuration.' }, 503) }
   if (user.is_anonymous || !user.email_confirmed_at) return { response: reply({ error: 'A confirmed Citizen account is required.' }, 403) }
   const { data: profile, error: profileError } = await client.from('profiles').select('id').eq('id', user.id).maybeSingle()
   if (profileError || !profile) return { response: reply({ error: 'Citizen profile unavailable.' }, 403) }
