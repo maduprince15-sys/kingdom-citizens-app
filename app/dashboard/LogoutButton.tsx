@@ -10,6 +10,7 @@ export default function LogoutButton() {
   const [loading, setLoading] = useState(false)
 
   async function handleLogout() {
+    window.dispatchEvent(new Event('kingdom:keys-lock'))
     const supabase = createClient()
     setLoading(true)
     setMessage('')
