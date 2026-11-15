@@ -15,7 +15,7 @@ The Android debug beta is a separate installable application. It does **not** ov
 
 ## Consolidated candidate — 15 November 2026
 
-Web source is pinned to development commit `c942d3c078491b154530e2d6e74b534035353985`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
+Web source is pinned to development commit `47304ace5f0690ddd52c6578c9fc84c40014d647`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
 
 Later ordered acceptance (not a request to test now):
 
@@ -39,3 +39,9 @@ Artifact retrieval from this execution environment is blocked by a proxy CONNECT
 This candidate incorporates 111 mocked behavioral tests, current-membership group chat/membership/deletion APIs, draft-preserving delivery errors, and the private attachment pipeline. Attachments remain disabled until explicitly configured against an isolated test project with a verified private size/type-limited bucket and participant-only RLS; no Production storage is used. Recipient decryption remains BLOCKED by missing key distribution, and ordinary Citizen-to-Citizen messaging is not claimed complete.
 
 The opt-in `npm run test:two-citizen` runner exits BLOCKED without synthetic isolated account settings. See `docs/SECURE_MESSAGING_ATTACHMENTS_2026-11-15.md` for exact prerequisites and pending acceptance gates. No installation or manual device testing requested now.
+
+## Recipient-envelope and attachment-policy candidate
+
+This candidate incorporates 155 tests, including actual Web Crypto recipient round trips and disposable local Postgres RLS tests. The v2 envelope remains unwired pending authenticated enrollment/persistence/revocation/recovery and live authorization verification. Legacy sender-only sends now fail closed rather than create more raw localStorage keys; drafts are retained. Private attachments remain disabled pending isolated Storage API/RLS verification; their guarded migration was exercised only in disposable memory, never applied to Supabase.
+
+The build verifies APK signing and SHA-256, then a separate Actions job downloads the uploaded artifact, rechecks SHA-256 and ZIP integrity, and records public integrity evidence in its job summary. A passing job establishes retrieval on that runner, not device installation or removal of the local proxy's Azure-host 403. Preserve independent beta identity/logo/OAuth; do not request manual installation yet.

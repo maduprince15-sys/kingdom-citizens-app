@@ -93,8 +93,10 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.kingdomcitizens.app.beta'"
           cp "$apk" Kingdom-Citizens-Beta-debug.apk
           sha256sum Kingdom-Citizens-Beta-debug.apk > android-beta-sha256.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk" > android-beta-signature.txt
+          sha256sum --check android-beta-sha256.txt
           git rev-parse HEAD > android-beta-source.txt
-          printf '%s\n' 'Web source: c942d3c078491b154530e2d6e74b534035353985' >> android-beta-source.txt
+          printf '%s\n' 'Web source: 47304ace5f0690ddd52c6578c9fc84c40014d647' >> android-beta-source.txt
           cp docs/ANDROID_BETA_TEST_README.md Android-Beta-Acceptance.md
 
       - name: Upload APK for later owner-led Android testing
@@ -104,7 +106,32 @@ jobs:
           path: |
             Kingdom-Citizens-Beta-debug.apk
             android-beta-sha256.txt
+            android-beta-signature.txt
             android-beta-source.txt
             Android-Beta-Acceptance.md
           if-no-files-found: error
           retention-days: 14
+
+  verify-beta:
+    name: Retrieve and verify the uploaded beta APK
+    needs: android-beta
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download this run's APK through GitHub Actions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: Kingdom-Citizens-Android-Beta
+          path: verified-beta
+      - name: Verify downloaded bytes and archive integrity
+        working-directory: verified-beta
+        run: |
+          test -s Kingdom-Citizens-Beta-debug.apk
+          sha256sum --check android-beta-sha256.txt
+          unzip -tq Kingdom-Citizens-Beta-debug.apk
+          test -s android-beta-signature.txt
+          test -s android-beta-source.txt
+          printf '### Android beta artifact verified\n\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'A separate Actions job retrieved the APK and verified its checksum and ZIP integrity. This is a debug beta; device behavior is not verified.\n\n' >> "$GITHUB_STEP_SUMMARY"
+          cat android-beta-sha256.txt >> "$GITHUB_STEP_SUMMARY"
+          cat android-beta-source.txt >> "$GITHUB_STEP_SUMMARY"

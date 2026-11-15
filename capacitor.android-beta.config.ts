@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   appName: 'Kingdom Citizens Beta',
   webDir: 'mobile-beta',
   server: {
-    url: 'https://kingdom-citizens-dj6pqpmor-maduprince15-9793s-projects.vercel.app',
+    url: 'https://kingdom-citizens-bp34ysiyx-maduprince15-9793s-projects.vercel.app',
     cleartext: false,
   },
 }
