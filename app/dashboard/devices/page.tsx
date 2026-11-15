@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
+import { isolatedRecipientEnrollmentEnabled } from '../../../lib/e2ee/isolated-config'
 import DevicePairingPanel from './DevicePairingPanel'
 export default async function DevicesPage() {
-  const ref = process.env.KC_ISOLATED_TEST_PROJECT_REF
-  if (process.env.KC_RECIPIENT_ENROLLMENT_ENABLED !== 'isolated-test-only' || process.env.VERCEL_ENV === 'production' || !ref || ref === 'jngbhejfqbyjletfknkh' || process.env.NEXT_PUBLIC_SUPABASE_URL !== `https://${ref}.supabase.co`) notFound()
+  if (!isolatedRecipientEnrollmentEnabled()) notFound()
   const client = await createClient()
   const { data: { user }, error } = await client.auth.getUser()
   if (error || !user) redirect('/login')

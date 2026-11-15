@@ -132,3 +132,8 @@ it('rejects completion of cancelled challenges before checking possession or mut
  m.adminFrom.mockReturnValue(query({id:C,cancelled_at:new Date().toISOString(),expires_at:new Date(Date.now()+60_000).toISOString()}))
  expect((await POST(request({action:'complete',challengeId:C,proof:'unused'}))).status).toBe(409);expect(m.rpc).not.toHaveBeenCalled()
 })
+
+it('rejects uppercase Production host aliases before privileged access',async()=>{
+ vi.stubEnv('KC_ISOLATED_TEST_PROJECT_REF','JNGBHEJFQBYJLETFKNKH');vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL','https://JNGBHEJFQBYJLETFKNKH.supabase.co')
+ expect((await POST(request({action:'revoke',expectedRevision:1}))).status).toBe(503);expect(m.admin).not.toHaveBeenCalled()
+})

@@ -46,3 +46,12 @@ it('starts enrollment from the actual bare server challenge response and binds e
  expect(m.fetch).toHaveBeenLastCalledWith('/api/messages/recipient-keys',expect.objectContaining({method:'POST',headers:{'Content-Type':'application/json','X-KC-Citizen':A}}))
  expect((screen.getByLabelText('Pairing request for your trusted device') as HTMLTextAreaElement).value).not.toContain('one-time-proof')
 })
+
+it.each(['expired','transport-failure'])('clears consent and pending approval input on %s without an auth event',async mode=>{
+ render(<DevicePairingPanel citizenId={A}/>);fireEvent.change(screen.getByLabelText('Pairing request'),{target:{value:'sensitive-pairing-request'}});fireEvent.click(screen.getByRole('checkbox'))
+ if(mode==='transport-failure')m.getUser.mockRejectedValue(new Error('network'))
+ else m.getUser.mockResolvedValue({data:{user:null},error:new Error('expired')})
+ fireEvent.click(screen.getByRole('button',{name:'Refresh devices'}));await screen.findByText(/Unable to complete/)
+ expect((screen.getByLabelText('Pairing request') as HTMLTextAreaElement).value).toBe('')
+ expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);expect(m.fetch).not.toHaveBeenCalled()
+})

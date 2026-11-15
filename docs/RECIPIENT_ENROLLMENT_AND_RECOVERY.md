@@ -99,3 +99,14 @@ The isolated UI is implemented but not a release acceptance candidate: real A/B/
 The existing v2 envelope and registry intentionally remain unchanged: one active device per Citizen, exactly two Citizen entries per private envelope. Simply duplicating Citizen IDs or reusing the single-key schema would bypass invariants and is not an approved multi-device implementation.
 
 A future version requires immutable `(citizen_id, device_id, key_version)` identities plus a monotonically versioned approved device-set snapshot, per-device revocation, authenticated dual-device approval, strict ownership RLS, and atomic server validation of conversation participants and the complete current device set at message commit. Every authorized sender/recipient device needs its own authenticated content-key wrapper; canonical AAD must bind conversation, sender, device IDs, key versions and snapshot revision. Bounded fan-out and downgrade rejection are required. No raw private keys transfer. A newly approved device receives only future messages by default; historical access needs separately approved client-side re-encryption from a retained authorized device or a pre-provisioned recovery mechanism. Device removal cannot erase old ciphertext or copied keys. These schema/envelope changes remain pending; no multi-device or E2EE-completion claim is made.
+
+## Four separate recovery outcomes
+
+| Operation | What it restores | What it does not restore |
+|---|---|---|
+| Account recovery | Ability to authenticate after verified password/inbox/provider recovery | A missing private encryption key or encrypted history |
+| Device re-enrollment | A new authenticated public-key identity after required trusted approval | The former device's private key; revoked-account-only replacement is denied |
+| Encryption-key recovery | Access to actual retained key material or a separately provisioned reviewed backup mechanism | Material that never existed or was permanently deleted |
+| Historical message recovery | Decryption using the matching retained key, or separately approved client-side re-encryption | Automatic history access on a newly paired device |
+
+No server-held plaintext private keys or login-based history reconstruction were introduced. Ordinary refresh/reauthentication reuses retained material without rotation. Retention/unlock on a shared device, strict auth-session revocation and simultaneous-device/history migration are still release gates; do not treat these distinctions as completed recovery implementation.
