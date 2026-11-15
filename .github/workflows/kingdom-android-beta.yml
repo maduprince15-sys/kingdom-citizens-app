@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Verify Kingdom Citizens redesign safety contracts
-        run: npm run test:glass-audit
+        run: npm test
 
       - name: Generate independent Android beta project
         run: |
@@ -48,11 +48,32 @@ jobs:
           rm -rf android
           npx cap add android
           npx cap sync android
+          # Install the approved original logo without changing source assets.
+          cp public/kingdom-citizens-logo.png resources/icon.png
+          npx capacitor-assets generate --android --iconBackgroundColor '#090405' --iconBackgroundColorDark '#090405'
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          source = manifest.read_text()
+          source = source.replace('android:allowBackup="true"', 'android:allowBackup="false"')
+          intent = '''
+              <intent-filter>
+                  <action android:name="android.intent.action.VIEW" />
+                  <category android:name="android.intent.category.DEFAULT" />
+                  <category android:name="android.intent.category.BROWSABLE" />
+                  <data android:scheme="kingdomcitizensbeta" android:host="auth" android:path="/callback" />
+              </intent-filter>
+          '''
+          source = source.replace('</activity>', intent + '</activity>')
+          manifest.write_text(source)
+          PYCODE
 
       - name: Confirm Android beta identity
         run: |
           grep -R 'com.kingdomcitizens.app.beta' android/app/build.gradle
           grep -R 'Kingdom Citizens Beta' android/app/src/main/res/values/strings.xml
+          grep -F 'android:scheme="kingdomcitizensbeta"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:allowBackup="false"' android/app/src/main/AndroidManifest.xml
 
       - name: Install Android SDK 36
         run: |
@@ -72,6 +93,9 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.kingdomcitizens.app.beta'"
           cp "$apk" Kingdom-Citizens-Beta-debug.apk
           sha256sum Kingdom-Citizens-Beta-debug.apk > android-beta-sha256.txt
+          git rev-parse HEAD > android-beta-source.txt
+          printf '%s\n' 'Web source: 085dd994110e499e9ad216b62bb7e7a0f162b814' >> android-beta-source.txt
+          cp docs/ANDROID_BETA_TEST_README.md Android-Beta-Acceptance.md
 
       - name: Upload APK for later owner-led Android testing
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -80,5 +104,7 @@ jobs:
           path: |
             Kingdom-Citizens-Beta-debug.apk
             android-beta-sha256.txt
+            android-beta-source.txt
+            Android-Beta-Acceptance.md
           if-no-files-found: error
           retention-days: 14
