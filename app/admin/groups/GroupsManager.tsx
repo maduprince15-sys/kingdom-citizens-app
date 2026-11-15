@@ -76,10 +76,6 @@ export default function GroupsManager({
     return member?.full_name || member?.email || 'Unknown member'
   }
 
-  function getGroupName(id: string) {
-    return groups.find((group) => group.id === id)?.name || 'Unknown group'
-  }
-
   function getMembersForGroup(groupId: string) {
     return groupMembers.filter((item) => item.group_id === groupId)
   }
