@@ -57,7 +57,7 @@ try {
     assert.ok((await probe.auth.refreshSession({ refresh_token: refreshTokens[index] })).error, 'Logged-out refresh token remains valid')
   }
   report.push({ check: 'All three local sessions sign out and refresh tokens are revoked', status: 'READY' })
-  for (const check of ['Confirmation/recovery inbox verification', 'Google provider browser round trip', 'Direct profile/role mutation RLS probes', 'Citizen recipient enrollment/decryption', 'Group membership/realtime and attachment service isolation']) {
+  for (const check of ['Confirmation/recovery inbox verification', 'Google provider browser round trip', 'Direct profile/role mutation RLS probes', 'Recent TOTP MFA, committed session revocation and authenticated pairing', 'Citizen recipient enrollment/decryption', 'Group membership/realtime and attachment service isolation']) {
     report.push({ check, status: 'BLOCKED', reason: 'Controlled inbox/browser or isolated service fixtures required; local tests do not replace live proof.' })
   }
   console.log(JSON.stringify(report, null, 2))
