@@ -145,3 +145,23 @@ it('refuses deployment when source or storage RLS is disabled', async () => {
   try { await expect(db.exec(migration)).rejects.toThrow('BLOCKED') }
   finally { await db.exec('ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY') }
 })
+it('anonymous users cannot upload into private storage even with a forged owner', async () => {
+  await db.exec(`SET request.jwt.claim.sub=''; SET ROLE anon;`)
+  await expect(db.exec(`INSERT INTO storage.objects(bucket_id,name,owner_id) VALUES('${bucket}','messages/${M}/${A}_11111111-1111-4111-8111-111111111111.txt','${A}')`)).rejects.toThrow()
+})
+it('anonymous users cannot delete or replace private attachments', async () => {
+  await db.exec(`SET request.jwt.claim.sub=''; SET ROLE anon;`)
+  expect((await db.query(`DELETE FROM storage.objects WHERE name='${messagePath}' RETURNING id`)).rows).toHaveLength(0)
+  expect((await db.query(`UPDATE storage.objects SET owner_id='${C}' WHERE name='${messagePath}' RETURNING id`)).rows).toHaveLength(0)
+  await db.exec('RESET ROLE')
+  expect((await db.query(`SELECT owner_id FROM storage.objects WHERE name='${messagePath}'`)).rows[0]).toEqual({owner_id:A})
+})
+it('restored membership grants current read access but never another uploader deletion', async () => {
+  await db.exec(`DELETE FROM public.citizen_group_members WHERE user_id='${B}'`)
+  await asCitizen(B)
+  expect((await db.query(`SELECT name FROM storage.objects WHERE name='${groupPath}'`)).rows).toHaveLength(0)
+  await db.exec(`RESET ROLE; INSERT INTO public.citizen_group_members VALUES('${G}','${B}')`)
+  await asCitizen(B)
+  expect((await db.query(`SELECT name FROM storage.objects WHERE name='${groupPath}'`)).rows).toHaveLength(1)
+  expect((await db.query(`DELETE FROM storage.objects WHERE name='${groupPath}' RETURNING id`)).rows).toHaveLength(0)
+})
