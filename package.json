@@ -14,7 +14,8 @@
     "test": "vitest run && npm run test:glass-audit",
     "typecheck": "tsc --noEmit",
     "lint:auth": "eslint proxy.ts lib/auth lib/android-google-auth.ts app/auth app/api/auth app/login app/register app/forgot-password app/update-password app/dashboard/LogoutButton.tsx app/dashboard/page.tsx app/profile/page.tsx app/members/page.tsx app/page.tsx app/components/PublicHeader.tsx app/components/GoogleLoginButton.tsx app/components/AndroidAuthReturnHandler.tsx tests vitest.config.ts",
-    "test:two-citizen": "node scripts/test-isolated-two-citizen.mjs"
+    "test:two-citizen": "node scripts/test-isolated-two-citizen.mjs",
+    "test:two-citizen:config": "node scripts/check-isolated-two-citizen-config.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
