@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
+import AttachmentPanel from '../../components/AttachmentPanel'
+import { isolatedAttachmentsEnabled } from '../../../lib/messaging/access'
 import EncryptedMessageText from '../EncryptedMessageText'
 
 type Props = {
@@ -96,6 +98,8 @@ export default async function MessageDetailPage({ params }: Props) {
             <EncryptedMessageText body={message.body} className='block' />
           </div>
         </article>
+
+        {isolatedAttachmentsEnabled() && <AttachmentPanel scope='messages' resourceId={message.id} />}
 
         <div className='mt-6 flex flex-wrap gap-3'>
           <Link href='/messages' className='rounded-full border border-yellow-700/70 px-4 py-2 text-sm text-yellow-300 hover:bg-yellow-700/20'>
