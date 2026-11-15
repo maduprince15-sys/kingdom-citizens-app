@@ -15,7 +15,7 @@ The Android debug beta is a separate installable application. It does **not** ov
 
 ## Consolidated candidate — 15 November 2026
 
-Web source is pinned to development commit `3e04ba6520825439e21b8567070e5dd04a787d32`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
+Web source is pinned to development commit `d2c05a62e07585bbfb4cb0b20b1b89a907c74992`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
 
 Later ordered acceptance (not a request to test now):
 
