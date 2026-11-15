@@ -9,8 +9,8 @@ import { GET,POST } from '../app/api/messages/recipient-keys/route'
 const A='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',B='bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',D='dddddddd-dddd-4ddd-dddd-dddddddddddd',C='cccccccc-cccc-4ccc-cccc-cccccccccccc'
 let identity: CryptoKeyPair, spki:string,keyId:string
 function query(data:unknown,error:unknown=null){
- const q={select:vi.fn(),eq:vi.fn(),is:vi.fn(),maybeSingle:vi.fn().mockResolvedValue({data,error}),insert:vi.fn().mockResolvedValue({error})}
- q.select.mockReturnValue(q);q.eq.mockReturnValue(q);q.is.mockReturnValue(q);return q
+ const q={select:vi.fn(),eq:vi.fn(),is:vi.fn(),update:vi.fn(),maybeSingle:vi.fn().mockResolvedValue({data,error}),insert:vi.fn().mockResolvedValue({error})}
+ q.update.mockReturnValue(q);q.select.mockReturnValue(q);q.eq.mockReturnValue(q);q.is.mockReturnValue(q);return q
 }
 function request(body:unknown){return new Request('https://preview.invalid/api/messages/recipient-keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
 beforeAll(async()=>{ identity=await generateRecipientIdentity();spki=bytesToBase64(new Uint8Array(await crypto.subtle.exportKey('spki',identity.publicKey)));keyId=await publicKeyFingerprint(identity.publicKey) },30_000)
@@ -113,4 +113,22 @@ it('rejects a missing content type',async()=>{
 it('accepts same-origin JSON with charset and retains authenticated actor ownership',async()=>{
  const req=request({action:'revoke',expectedRevision:1});req.headers.set('Origin','https://preview.invalid');req.headers.set('Sec-Fetch-Site','same-origin');req.headers.set('Content-Type','application/json; charset=utf-8')
  expect((await POST(req)).status).toBe(200);expect(m.rpc).toHaveBeenCalledWith('kc_revoke_recipient_key',{p_actor:A,p_expected_revision:1})
+})
+
+it('rejects account switching between validation and mutation',async()=>{
+ const req=request({action:'revoke',expectedRevision:1});req.headers.set('X-KC-Citizen',B)
+ expect((await POST(req)).status).toBe(403);expect(m.admin).not.toHaveBeenCalled()
+})
+it('cancels only an owned, unused challenge and filters both terminal states',async()=>{
+ const q=query({id:C});m.adminFrom.mockReturnValue(q)
+ expect((await POST(request({action:'cancel',challengeId:C}))).status).toBe(200)
+ expect(q.eq).toHaveBeenCalledWith('citizen_id',A);expect(q.eq).toHaveBeenCalledWith('id',C)
+ expect(q.is).toHaveBeenCalledWith('used_at',null);expect(q.is).toHaveBeenCalledWith('cancelled_at',null)
+})
+it('returns a safe conflict for unavailable or terminal cancellation',async()=>{
+ m.adminFrom.mockReturnValue(query(null));expect((await POST(request({action:'cancel',challengeId:C}))).status).toBe(409)
+})
+it('rejects completion of cancelled challenges before checking possession or mutation',async()=>{
+ m.adminFrom.mockReturnValue(query({id:C,cancelled_at:new Date().toISOString(),expires_at:new Date(Date.now()+60_000).toISOString()}))
+ expect((await POST(request({action:'complete',challengeId:C,proof:'unused'}))).status).toBe(409);expect(m.rpc).not.toHaveBeenCalled()
 })

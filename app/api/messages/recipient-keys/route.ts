@@ -86,18 +86,26 @@ export async function POST(request: Request) {
     const auth = await authenticate()
     if (auth.response) return auth.response
     const { user } = auth
+    if (request.headers.has('x-kc-citizen') && request.headers.get('x-kc-citizen') !== user.id) return reply({ error: 'Citizen session changed.' }, 403)
     let input: Record<string, unknown> | null
     try { input = await body(request) } catch { return reply({ error: 'Invalid enrollment request.' }, 400) }
     if (!input) return reply({ error: 'Enrollment request is too large.' }, 413)
-    const allowed = input.action === 'challenge' ? ['action','deviceId','publicSpki','expectedRevision'] : input.action === 'complete' ? ['action','challengeId','proof','priorProof'] : input.action === 'revoke' ? ['action','expectedRevision'] : []
+    const allowed = input.action === 'challenge' ? ['action','deviceId','publicSpki','expectedRevision'] : input.action === 'complete' ? ['action','challengeId','proof','priorProof'] : input.action === 'cancel' ? ['action','challengeId'] : input.action === 'revoke' ? ['action','expectedRevision'] : []
     if (!allowed.length || Object.keys(input).some(key => !allowed.includes(key))) return reply({ error: 'Invalid enrollment request.' }, 400)
     const admin = createAdminClient()
+    if (input.action === 'cancel') {
+      if (typeof input.challengeId !== 'string' || !resourceIdPattern.test(input.challengeId)) return reply({ error: 'Invalid challenge.' }, 400)
+      const { data, error } = await admin.from('citizen_key_challenges').update({ cancelled_at: new Date().toISOString() })
+        .eq('id', input.challengeId).eq('citizen_id', user.id).is('used_at', null).is('cancelled_at', null).select('id').maybeSingle()
+      if (error || !data) return reply({ error: 'Pairing request unavailable or already closed.' }, 409)
+      return reply({ success: true })
+    }
     if (input.action === 'complete') {
       if (typeof input.challengeId !== 'string' || !resourceIdPattern.test(input.challengeId)) return reply({ error: 'Invalid challenge.' }, 400)
-      const { data: challenge, error } = await admin.from('citizen_key_challenges').select('id,proof_hash,prior_proof_hash,expires_at,used_at').eq('id', input.challengeId).eq('citizen_id', user.id).maybeSingle()
+      const { data: challenge, error } = await admin.from('citizen_key_challenges').select('id,proof_hash,prior_proof_hash,expires_at,used_at,cancelled_at').eq('id', input.challengeId).eq('citizen_id', user.id).maybeSingle()
       if (error) return reply({ error: 'Enrollment service unavailable.' }, 503)
       if (!challenge) return reply({ error: 'Challenge not found.' }, 404)
-      if (challenge.used_at || Date.parse(challenge.expires_at) <= Date.now()) return reply({ error: 'Challenge expired or already used.' }, 409)
+      if (challenge.cancelled_at || challenge.used_at || Date.parse(challenge.expires_at) <= Date.now()) return reply({ error: 'Challenge expired or already used.' }, 409)
       if (!await validProof(input.proof, challenge.proof_hash) || (challenge.prior_proof_hash ? !await validProof(input.priorProof, challenge.prior_proof_hash) : input.priorProof != null)) return reply({ error: 'Private-key possession could not be verified.' }, 403)
       const { data, error: finishError } = await admin.rpc('kc_finish_recipient_enrollment', { p_actor: user.id, p_challenge: input.challengeId, p_proof: input.proof, p_prior_proof: input.priorProof || null })
       if (finishError) return reply({ error: 'Enrollment conflict or expired challenge. Start again.' }, 409)

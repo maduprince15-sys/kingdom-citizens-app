@@ -4,6 +4,7 @@ const fixture = {
   KC_INTEGRATION_OPT_IN: 'synthetic-isolated-only', KC_ISOLATED_TEST_PROJECT_REF: 'synthetic-test',
   KC_TEST_SUPABASE_URL: 'https://synthetic-test.supabase.co', KC_TEST_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_synthetic_fixture',
   KC_TEST_CITIZEN_A_EMAIL: 'synthetic-a@example.invalid', KC_TEST_CITIZEN_A_PASSWORD: 'synthetic-password',
+  KC_TEST_CITIZEN_C_EMAIL: 'synthetic-c@example.invalid', KC_TEST_CITIZEN_C_PASSWORD: 'synthetic-password',
   KC_TEST_CITIZEN_B_EMAIL: 'synthetic-b@example.invalid', KC_TEST_CITIZEN_B_PASSWORD: 'synthetic-password',
 }
 // Hard network block even if a future regression accidentally passes the guard.
@@ -21,6 +22,8 @@ it.each([
 })
 it.each([
  ['absent',{},2],
+ ['missing C',{...fixture,KC_TEST_CITIZEN_C_EMAIL:''},2],
+ ['duplicate C',{...fixture,KC_TEST_CITIZEN_C_EMAIL:fixture.KC_TEST_CITIZEN_A_EMAIL},2],
  ['synthetic shape',fixture,0],
  ['secret key',{...fixture,KC_TEST_SUPABASE_PUBLISHABLE_KEY:'sb_secret_never_allowed'},2],
  ['same normalized account',{...fixture,KC_TEST_CITIZEN_B_EMAIL:' SYNTHETIC-A@example.invalid '},2],

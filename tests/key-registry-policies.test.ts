@@ -18,6 +18,7 @@ beforeAll(async()=>{
     GRANT SELECT ON public.profiles TO authenticated;
     INSERT INTO public.profiles VALUES('${A}'),('${B}'); SET app.kingdom_isolated_fixture='synthetic-only';`)
   await db.exec(sql)
+  await db.exec(readFileSync('supabase/migrations/20261115161155_isolated_pairing_cancellation.sql','utf8'))
 },30_000)
 beforeEach(async()=>{ await db.exec(`RESET ROLE; TRUNCATE public.citizen_key_heads,public.citizen_recipient_keys,public.citizen_key_challenges; SET request.jwt.claim.sub=''; SET request.jwt.claims='{}';`) })
 afterAll(async()=>{await db?.close()})
@@ -121,4 +122,43 @@ it('denies anonymous signed-in identities even if a profile row exists',async()=
  await citizen(A);await db.exec(`SET request.jwt.claims='{"is_anonymous":true}'`)
  expect((await db.query('SELECT * FROM public.citizen_recipient_keys')).rows).toHaveLength(0)
  expect((await db.query('SELECT * FROM public.citizen_key_heads')).rows).toHaveLength(0)
+})
+it('cancelled challenge cannot activate a key and all registry writes roll back',async()=>{
+ const id=await challenge();await service();await db.exec(`UPDATE public.citizen_key_challenges SET cancelled_at=clock_timestamp() WHERE id='${id}'`)
+ await expect(finish(id,A)).rejects.toThrow()
+ await db.exec('RESET ROLE')
+ expect((await db.query('SELECT * FROM public.citizen_key_heads')).rows).toHaveLength(0)
+ expect((await db.query('SELECT * FROM public.citizen_recipient_keys')).rows).toHaveLength(0)
+})
+it('terminal challenge cannot be reopened or altered even by service role',async()=>{
+ const id=await challenge();await service();await db.exec(`UPDATE public.citizen_key_challenges SET cancelled_at=clock_timestamp() WHERE id='${id}'`)
+ await expect(db.exec(`UPDATE public.citizen_key_challenges SET cancelled_at=NULL WHERE id='${id}'`)).rejects.toThrow('closed')
+})
+it('challenge binding cannot be replaced by privileged accidental updates',async()=>{
+ const id=await challenge();await service()
+ await expect(db.exec(`UPDATE public.citizen_key_challenges SET citizen_id='${B}' WHERE id='${id}'`)).rejects.toThrow('immutable')
+})
+it('ordinary Citizens cannot cancel challenges through direct table writes',async()=>{
+ const id=await challenge();await citizen(A)
+ await expect(db.exec(`UPDATE public.citizen_key_challenges SET cancelled_at=clock_timestamp() WHERE id='${id}'`)).rejects.toThrow()
+})
+it('completed enrollment cannot be cancelled afterward',async()=>{
+ const id=await challenge();await service();await finish(id)
+ await expect(db.exec(`UPDATE public.citizen_key_challenges SET cancelled_at=clock_timestamp() WHERE id='${id}'`)).rejects.toThrow('closed')
+})
+it('cancellation and completion leave exactly one terminal outcome',async()=>{
+ const id=await challenge();await service()
+ const results=await Promise.allSettled([db.exec(`UPDATE public.citizen_key_challenges SET cancelled_at=clock_timestamp() WHERE id='${id}'`),finish(id)])
+ expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1)
+ const result=await db.query<{used_at:string|null;cancelled_at:string|null}>(`SELECT used_at,cancelled_at FROM public.citizen_key_challenges WHERE id='${id}'`)
+ expect(Boolean(result.rows[0].used_at)!==Boolean(result.rows[0].cancelled_at)).toBe(true)
+})
+it('expired challenge cannot be marked completed by a delayed writer',async()=>{
+ const id=await challenge(A,0,fingerprint(1),null,true);await service()
+ await expect(db.exec(`UPDATE public.citizen_key_challenges SET used_at=clock_timestamp() WHERE id='${id}'`)).rejects.toThrow('expired')
+})
+it('cancellation migration refuses a database without isolated acknowledgment',async()=>{
+ await db.exec(`SET app.kingdom_isolated_fixture=''`)
+ try {await expect(db.exec(readFileSync('supabase/migrations/20261115161155_isolated_pairing_cancellation.sql','utf8'))).rejects.toThrow('BLOCKED')}
+ finally {await db.exec(`SET app.kingdom_isolated_fixture='synthetic-only'`)}
 })

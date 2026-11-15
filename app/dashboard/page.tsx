@@ -513,6 +513,7 @@ export default async function DashboardPage() {
         <details className="rounded-2xl border border-[#c1a068]/15 bg-[#160a0d]/60 p-5">
           <summary className="cursor-pointer text-sm font-semibold text-[#d7c5ad]">Account options</summary>
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            {process.env.KC_RECIPIENT_ENROLLMENT_ENABLED === 'isolated-test-only' && process.env.VERCEL_ENV !== 'production' && <Link href='/dashboard/devices' className='block text-yellow-300'>My trusted device</Link>}
             <LogoutButton />
             <Link href="/account/delete" className="rounded-full border border-red-700/40 px-5 py-3 text-sm font-semibold text-red-200 hover:bg-red-950/30">Delete account</Link>
           </div>
