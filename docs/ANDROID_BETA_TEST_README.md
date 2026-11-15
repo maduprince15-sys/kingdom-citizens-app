@@ -15,7 +15,7 @@ The Android debug beta is a separate installable application. It does **not** ov
 
 ## Consolidated candidate — 15 November 2026
 
-Web source is pinned to development commit `085dd994110e499e9ad216b62bb7e7a0f162b814`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
+Web source is pinned to development commit `456e416885250e081a4ed0b9c06056e8541c5a34`, not a moving Production URL. APK uses the approved original logo, independent beta package ID, disabled Android backup, and exact beta OAuth intent. The artifact includes source references and SHA-256 checksum.
 
 Later ordered acceptance (not a request to test now):
 
@@ -27,3 +27,9 @@ Later ordered acceptance (not a request to test now):
 6. Attachments remain disabled pending private storage authorization. Message recipient key sharing/recovery is not verified; do not claim E2EE.
 
 Outstanding external gates: isolated test account/provider configuration, Preview accessibility from a device, native install/return and notification behavior. Build success alone does not establish these behaviors.
+
+## Security verification candidate
+
+This candidate includes 70 mocked behavioral regressions and the profile/directory/chat/role hardening documented in `docs/TWO_CITIZEN_VERIFICATION_2026-11-15.md`. Full lint has zero errors. Actual isolated A/B authentication, deployed RLS, ordinary Citizen-to-Citizen delivery, recipient decryption and private attachments remain BLOCKED; an APK build does not change those findings.
+
+Artifact retrieval from this execution environment is blocked by a proxy CONNECT 403 on GitHub's Azure artifact host. Checksum verification requires actual downloaded bytes; no local checksum or installation is claimed. This candidate supersedes the earlier beta installer for later acceptance. No manual testing requested now.
