@@ -144,3 +144,24 @@ it('revoked resource access rejects deletion before storage', async () => {
   expect((await DELETE(new Request(`https://preview.invalid/api/attachments?scope=messages&id=${id}&name=${filename}`))).status).toBe(404)
   expect(m.remove).not.toHaveBeenCalled()
 })
+
+it.each(['download', 'list', 'remove'] as const)('normalizes thrown %s service errors without disclosure', async operation => {
+  m[operation].mockRejectedValue(new Error('private SQL internal service details'))
+  const url = `https://preview.invalid/api/attachments?scope=messages&id=${id}${operation === 'list' ? '' : `&name=${filename}`}`
+  const response = operation === 'remove' ? await DELETE(new Request(url)) : await GET(new Request(url))
+  expect(response.status).toBe(503)
+  expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+  expect(await response.text()).not.toContain('SQL')
+})
+it.each(['download', 'list'] as const)('rejects access revoked during %s before returning bytes or names', async operation => {
+  m.from.mockReturnValueOnce(query({ sender_id: A, recipient_id: B })).mockReturnValueOnce(query(null))
+  const url = `https://preview.invalid/api/attachments?scope=messages&id=${id}${operation === 'list' ? '' : `&name=${filename}`}`
+  const response = await GET(new Request(url))
+  expect(response.status).toBe(404)
+  expect(await response.text()).not.toContain('private synthetic data')
+})
+it('rechecks access after bucket inspection before deleting', async () => {
+  m.from.mockReturnValueOnce(query({ sender_id: A, recipient_id: B })).mockReturnValueOnce(query(null))
+  expect((await DELETE(new Request(`https://preview.invalid/api/attachments?scope=messages&id=${id}&name=${filename}`))).status).toBe(404)
+  expect(m.remove).not.toHaveBeenCalled()
+})
