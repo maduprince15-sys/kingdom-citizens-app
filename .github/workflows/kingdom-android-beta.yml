@@ -96,7 +96,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk" > android-beta-signature.txt
           sha256sum --check android-beta-sha256.txt
           git rev-parse HEAD > android-beta-source.txt
-          printf '%s\n' 'Web source: f8735e2b2894ccad0cc9d5432c4139159e5b67db' >> android-beta-source.txt
+          printf '%s\n' 'Web source: 3e04ba6520825439e21b8567070e5dd04a787d32' >> android-beta-source.txt
           cp docs/ANDROID_BETA_TEST_README.md Android-Beta-Acceptance.md
 
       - name: Upload APK for later owner-led Android testing
