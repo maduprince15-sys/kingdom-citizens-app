@@ -33,7 +33,6 @@ export default function ChatRoom({
   messages,
   currentUserId,
   currentUserName,
-  currentUserRole,
   canModerate,
   chatRoom = 'general',
   title = 'Citizens Discussion',
@@ -131,24 +130,18 @@ export default function ChatRoom({
       return
     }
 
-    const { error } = await supabase.from('chat_messages').insert({
-      sender_id: currentUserId,
-      sender_name: currentUserName,
-      sender_role: currentUserRole,
-      body: cleanBody,
-      chat_room: chatRoom,
-      is_deleted: false,
-    })
-
-    if (error) {
-      setMessage('Could not send the group message. Please try again.')
-      setLoading(false)
-      return
-    }
-
-    setBody('')
-    setMessage('')
-    setLoading(false)
+    try {
+      const response = await fetch('/api/chat/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room: chatRoom, body: cleanBody }),
+      })
+      if (!response.ok) { setMessage('Could not send the group message. Please try again.'); return }
+      setBody('')
+      setMessage('Message sent.')
+      router.refresh()
+    } catch {
+      setMessage('Could not reach chat. Your draft is still here.')
+    } finally { setLoading(false) }
   }
 
   async function deleteMessage(id: string, mine: boolean) {

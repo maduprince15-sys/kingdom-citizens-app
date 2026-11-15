@@ -28,8 +28,7 @@ export default async function AdminGroupsPage() {
   }
 
   const { data: members } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, role')
+    .rpc('member_directory')
     .order('full_name', { ascending: true })
 
   const { data: groups } = await supabase

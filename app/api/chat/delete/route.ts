@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { canAccessResource } from '../../../../lib/messaging/access'
 import { createClient } from '../../../../lib/supabase/server'
 
 export async function POST(request: Request) {
@@ -36,11 +37,16 @@ export async function POST(request: Request) {
   // Resolve the message under the actor's RLS before any privileged operation.
   const { data: chatMessage, error: messageError } = await supabase
     .from('chat_messages')
-    .select('id, sender_id, is_deleted')
+    .select('id, sender_id, is_deleted, chat_room')
     .eq('id', messageId)
     .single()
 
   if (messageError || !chatMessage) {
+    return NextResponse.json({ error: 'Chat message not found.' }, { status: 404 })
+  }
+
+  if (chatMessage.chat_room?.startsWith('group:') &&
+      !await canAccessResource(supabase, user.id, 'groups', chatMessage.chat_room.slice(6))) {
     return NextResponse.json({ error: 'Chat message not found.' }, { status: 404 })
   }
 
