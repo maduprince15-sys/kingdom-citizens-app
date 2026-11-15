@@ -61,7 +61,7 @@ export default async function SentMessagesPage() {
       <section className='mx-auto max-w-5xl px-4 py-8 md:px-8'>
         {error && (
           <div className='rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
-            Error loading sent messages: {error.message}
+            Could not load sent messages. Please try again.
           </div>
         )}
 

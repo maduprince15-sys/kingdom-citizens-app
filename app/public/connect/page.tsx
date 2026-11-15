@@ -66,7 +66,7 @@ export default async function PublicConnectPage() {
         </div>
 
         <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-          {links?.map((item: any, index: number) => {
+          {links?.map((item, index) => {
             const title =
               item.platform_name ??
               item.title ??

@@ -26,3 +26,11 @@ Behavioral tests use mocked Supabase responses, not real member accounts. They c
 - Chat attachments remain unavailable. A private bucket, size/type enforcement and participant-only upload/download authorization must be verified before enabling them. Public content-media storage is unsuitable for private messages.
 - Public homepage currently provides teaching/library/gatherings/connect and announcements. Dedicated About Us, featured music and shop sections are not implemented here because official copy/catalog is unavailable and the approved layout must be preserved.
 - Android acceptance remains consolidated: install isolated beta, verify original logo/homepage, email confirmation/login/recovery, Google return, persistence/logout, two-account role and message privacy, and opt-in push. No owner testing requested before a coherent artifact exists.
+
+## Verified remote evidence
+
+- Development head `085dd994110e499e9ad216b62bb7e7a0f162b814`: Vercel Preview `dpl_F8Gn9fn3z3iFouxfSnahdW2MoDW6` is READY; target is Preview, not Production.
+- GitHub Actions run `43684814416`: SUCCESS. 34 behavioral tests, static audit, TypeScript, auth lint (0 errors / 4 image warnings) and production-mode build passed.
+- Full lint reports 20 existing errors / 33 warnings; the CI step is visibly non-blocking and does not redefine lint success.
+- Local `next start`: `/`, `/login`, `/register`, `/forgot-password`, `/update-password` returned 200; unauthenticated `/dashboard` returned 307 to `/login`.
+- Preview requires Vercel SSO (302 to `vercel.com/sso-api`); no protection settings changed and no bypass secret embedded in the beta. Device access remains a gate.

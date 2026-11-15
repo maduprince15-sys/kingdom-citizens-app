@@ -87,7 +87,7 @@ export default async function StudyDiscussionPage() {
       <section className='mx-auto max-w-6xl px-4 py-8 md:px-8'>
         {messagesError && (
           <div className='mb-6 rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
-            Error loading study discussion: {messagesError.message}
+            Could not load study discussion. Please try again.
           </div>
         )}
 

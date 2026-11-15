@@ -53,7 +53,7 @@ export default async function PublicMeetingsPage() {
             </div>
           )}
 
-          {meetings?.map((item: any, index: number) => {
+          {meetings?.map((item, index) => {
             const title = item.title ?? 'Kingdom Citizens Meeting'
             const platform = item.platform ?? item.meeting_platform
             const date = item.date_text ?? item.date

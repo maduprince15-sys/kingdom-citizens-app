@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
-type ChatMessage = {
+export type ChatMessage = {
   id: string
   sender_id: string
   sender_name: string | null
@@ -141,7 +141,7 @@ export default function ChatRoom({
     })
 
     if (error) {
-      setMessage(error.message)
+      setMessage('Could not send the group message. Please try again.')
       setLoading(false)
       return
     }

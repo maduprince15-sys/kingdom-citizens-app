@@ -32,7 +32,7 @@ export default function DeleteUserButton({ userId, email }: Props) {
         body: JSON.stringify({ targetUserId: userId }),
       })
 
-      let result: any = {}
+      let result: { error?: string } = {}
       try {
         result = await response.json()
       } catch {

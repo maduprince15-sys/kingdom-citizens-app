@@ -86,7 +86,7 @@ export default async function ChatPage() {
       <section className='mx-auto max-w-6xl px-4 py-8 md:px-8'>
         {messagesError && (
           <div className='mb-6 rounded border border-red-700 bg-red-950/40 p-4 text-red-300'>
-            Error loading chat messages: {messagesError.message}
+            Could not load chat messages. Please try again.
           </div>
         )}
 

@@ -90,3 +90,14 @@ it('persists refreshed session cookies to request and response with no-store hea
   expect(response.headers.get('Pragma')).toBe('no-cache')
   vi.unstubAllEnvs()
 })
+it.each(['citizen-a', 'citizen-b'])('onboards only the verified identity %s', async citizenId => {
+  mocks.getUser.mockResolvedValue({ data: { user: { id: citizenId, email: `${citizenId}@example.invalid`, user_metadata: { id: 'other-citizen', role: 'owner' } } }, error: null })
+  mocks.maybeSingle.mockResolvedValue({ data: null, error: null })
+  await GET(new Request('https://preview.example/auth/callback?code=test'))
+  expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ id: citizenId, role: 'member' }))
+})
+it.each(['owner', 'admin', 'moderator', 'teacher', 'finance'])('OAuth cannot rewrite existing %s privileges', async role => {
+  mocks.maybeSingle.mockResolvedValue({ data: { id: 'citizen', role }, error: null })
+  expect((await GET(new Request('https://preview.example/auth/callback?code=test'))).status).toBe(307)
+  expect(mocks.insert).not.toHaveBeenCalled()
+})

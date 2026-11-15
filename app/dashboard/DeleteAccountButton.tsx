@@ -25,7 +25,7 @@ export default function DeleteAccountButton() {
         method: 'POST',
       })
 
-      let result: any = {}
+      let result: { error?: string } = {}
       try {
         result = await response.json()
       } catch {
