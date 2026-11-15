@@ -73,3 +73,9 @@ it('a revoked trusted device cannot authorize another enrollment',async()=>{
  await enrolled();const id=await challenge(1,T);await op('revoke',{expected_revision:1})
  await expect(op('approve',{challenge_id:id,prior_proof:prior})).rejects.toThrow('device changed')
 })
+
+it('migration rejects an owner that can read but cannot lock Auth sessions',async()=>{
+ await db.exec('RESET ROLE;GRANT SELECT ON auth.sessions TO service_role;SET ROLE service_role')
+ try{await expect(db.exec(readFileSync('supabase/migrations/20261115164408_isolated_sensitive_session_operations.sql','utf8'))).rejects.toThrow('permission denied for table sessions')}
+ finally{await db.exec('RESET ROLE;REVOKE SELECT ON auth.sessions FROM service_role')}
+})

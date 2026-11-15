@@ -3,7 +3,7 @@
 DO $$ BEGIN
  IF current_setting('app.kingdom_isolated_fixture',true) IS DISTINCT FROM 'synthetic-only' THEN RAISE EXCEPTION 'BLOCKED: isolated synthetic fixture required'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_class WHERE oid='public.citizen_key_challenges'::regclass AND relrowsecurity) THEN RAISE EXCEPTION 'BLOCKED: challenge RLS required'; END IF;
- PERFORM id,user_id,not_after FROM auth.sessions LIMIT 0;
+ PERFORM id,user_id,not_after FROM auth.sessions WHERE false FOR SHARE;
  PERFORM cancelled_at FROM public.citizen_key_challenges LIMIT 0;
 END $$;
 CREATE TABLE public.citizen_pairing_approvals(
