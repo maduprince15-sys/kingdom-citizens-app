@@ -6,7 +6,7 @@ const ref = process.env.KC_ISOLATED_TEST_PROJECT_REF
 const url = process.env.KC_TEST_SUPABASE_URL
 const key = process.env.KC_TEST_SUPABASE_PUBLISHABLE_KEY
 const accounts = ['A', 'B'].map(name => ({ email: process.env[`KC_TEST_CITIZEN_${name}_EMAIL`], password: process.env[`KC_TEST_CITIZEN_${name}_PASSWORD`] }))
-if (process.env.KC_INTEGRATION_OPT_IN !== 'synthetic-isolated-only' || !ref || ref === 'jngbhejfqbyjletfknkh' || url !== `https://${ref}.supabase.co` || !key || accounts.some(account => !account.email || !account.password)) {
+if (process.env.KC_INTEGRATION_OPT_IN !== 'synthetic-isolated-only' || !ref || ref === 'jngbhejfqbyjletfknkh' || url !== `https://${ref}.supabase.co` || !key || accounts.some(account => !account.email || !account.password) || accounts[0].email === accounts[1].email) {
   console.log('BLOCKED: explicit isolated project, publishable key, opt-in and two genuine synthetic accounts required.')
   process.exit(2)
 }
@@ -14,6 +14,7 @@ const clients = accounts.map(() => createClient(url, key, { auth: { persistSessi
 const report = []
 try {
   const users = []
+  const refreshTokens = []
   for (let index = 0; index < 2; index++) {
     if (process.env.KC_TEST_REGISTER_CITIZENS === 'create-synthetic-only') {
       const { data, error } = await clients[index].auth.signUp(accounts[index])
@@ -32,6 +33,7 @@ try {
     const refreshed = await clients[index].auth.refreshSession()
     assert.equal(refreshed.error, null, 'Session refresh failed')
     assert.equal(refreshed.data.user.id, data.user.id)
+    refreshTokens.push(refreshed.data.session.refresh_token)
   }
   assert.notEqual(users[0].id, users[1].id, 'Two distinct Citizens are required')
   report.push({ check: 'Independent A/B password sessions and refresh', status: 'READY' })
@@ -47,13 +49,18 @@ try {
     assert.ok(!directory.data?.some(row => row.id !== users[index].id && (row.email || row.phone)), 'Directory discloses other Citizen contact details')
     report.push({ check: `Citizen ${index === 0 ? 'A' : 'B'} profile/directory isolation`, status: 'READY' })
   }
-  for (const client of clients) {
+  for (const [index, client] of clients.entries()) {
     assert.equal((await client.auth.signOut({ scope: 'local' })).error, null)
     assert.equal((await client.auth.getSession()).data.session, null)
+    const probe = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+    assert.ok((await probe.auth.refreshSession({ refresh_token: refreshTokens[index] })).error, 'Logged-out refresh token remains valid')
   }
-  report.push({ check: 'Both local sessions sign out', status: 'READY' })
-  report.push({ check: 'Registration confirmation, recovery email, Google provider, unauthorized mutations, messaging/attachments', status: 'BLOCKED', reason: 'Separate inbox/browser, policy fixture and recipient-key setup required; mocked suites cover code boundaries.' })
+  report.push({ check: 'Both local sessions sign out and refresh tokens are revoked', status: 'READY' })
+  for (const check of ['Confirmation/recovery inbox verification', 'Google provider browser round trip', 'Direct profile/role mutation RLS probes', 'Citizen recipient enrollment/decryption', 'Group membership/realtime and attachment service isolation']) {
+    report.push({ check, status: 'BLOCKED', reason: 'Controlled inbox/browser or isolated service fixtures required; local tests do not replace live proof.' })
+  }
   console.log(JSON.stringify(report, null, 2))
+  if (report.some(check => check.status === 'BLOCKED')) process.exitCode = 2
 } catch (error) {
   if (error.message === 'CONFIRMATION_REQUIRED') {
     console.log(JSON.stringify(report, null, 2))
